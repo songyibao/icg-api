@@ -1,4 +1,4 @@
-package com.yb.icgapi.model.dto;
+package com.yb.icgapi.model.dto.user;
 
 
 import lombok.Data;

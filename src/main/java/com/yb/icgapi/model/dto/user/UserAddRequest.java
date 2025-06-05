@@ -1,14 +1,17 @@
-package com.yb.icgapi.model.entity;
+package com.yb.icgapi.model.dto.user;
+
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
-public class UserVO implements Serializable {
-    /**
-     * id
-     */
-    private Long id;
+/**
+ * 用户创建请求
+ */
+@Data
+public class UserAddRequest implements Serializable {
 
     /**
      * 账号
@@ -37,6 +40,7 @@ public class UserVO implements Serializable {
     private String userRole;
 
 
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+
+    private static final long serialVersionUID = -5406732683725923146L;
+
 }
