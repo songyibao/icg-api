@@ -9,11 +9,11 @@ import java.io.Serializable;
 public class BaseResponse<T> implements Serializable {
     private final int code;
     private final T data;
-    private final String msg;
-    public BaseResponse(int code, T data, String msg) {
+    private final String message;
+    public BaseResponse(int code, T data, String message) {
         this.code = code;
         this.data = data;
-        this.msg = msg;
+        this.message = message;
     }
     public BaseResponse(int code, T data) {
         this(code, data, "");
