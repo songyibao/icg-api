@@ -9,13 +9,17 @@ import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.manager.CosManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
 
 @Slf4j
+@RestController
+@RequestMapping("/file")
 public class FileController {
     @Resource
     private CosManager cosManager;
