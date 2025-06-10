@@ -4,6 +4,7 @@ package com.yb.icgapi.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.yb.icgapi.constant.DatabaseConstant;
 import com.yb.icgapi.constant.UserConstant;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
@@ -124,25 +125,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         log.info("用户退出登录成功");
     }
 
-    @Override
-    public UserVO getUserVO(User user) {
-        if (user == null) {
-            return null;
-        }
-        UserVO userVO = new UserVO();
-        BeanUtils.copyProperties(user, userVO);
-        return userVO;
-    }
 
-    @Override
-    public List<UserVO> getUserVOList(List<User> userList) {
-        if (CollUtil.isEmpty(userList)) {
-            return Collections.emptyList();
-        }
-        return userList.stream()
-                .map(this::getUserVO)
-                .collect(Collectors.toList());
-    }
 
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
@@ -166,9 +149,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 .like(StringUtils.isNotBlank(userProfile), "userProfile", userProfile)
                 .eq(StringUtils.isNotBlank(userRole), "userRole", userRole)
                 .orderBy(StringUtils.isNotBlank(sortField) && StringUtils.isNotBlank(sortOrder),
-                        sortOrder.equals("ascend"), sortField);
+                        sortOrder.equals(DatabaseConstant.ASC), sortField);
 
         return queryWrapper;
+    }
+
+    @Override
+    public boolean isAdmin(User user) {
+        return user != null && user.getUserRole().equals(UserRoleEnum.ADMIN.getValue());
     }
 }
 

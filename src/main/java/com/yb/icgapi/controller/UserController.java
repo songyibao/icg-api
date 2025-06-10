@@ -120,7 +120,7 @@ public class UserController {
         ThrowUtils.ThrowIf(current <= 0 || pageSize <= 0, ErrorCode.PARAMS_ERROR);
         Page<User> userPage = userService.page(new Page<>(current, pageSize), userService.getQueryWrapper(userQueryRequest));
         Page<UserVO> userVOPage = new Page<>(current, pageSize,userPage.getTotal());
-        List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
+        List<UserVO> userVOList = UserVO.objToVOList(userPage.getRecords());
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
     }

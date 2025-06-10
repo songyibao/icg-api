@@ -1,11 +1,17 @@
 package com.yb.icgapi.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yb.icgapi.model.dto.picture.PictureQueryRequest;
 import com.yb.icgapi.model.dto.picture.PictureUploadRequest;
 import com.yb.icgapi.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yb.icgapi.model.entity.User;
 import com.yb.icgapi.model.vo.PictureVO;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author songyibao
@@ -15,5 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 public interface PictureService extends IService<Picture> {
 
 
-    PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+    public QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
+    public PictureVO getPictureVO(Picture picture);
+
+    public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage,HttpServletRequest request);
+    public void validPicture(Picture picture);
 }
