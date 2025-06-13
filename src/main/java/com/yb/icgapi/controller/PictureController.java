@@ -1,5 +1,6 @@
 package com.yb.icgapi.controller;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import cn.hutool.json.JSON;
@@ -20,6 +21,7 @@ import com.yb.icgapi.model.dto.picture.PictureUpdateRequest;
 import com.yb.icgapi.model.dto.picture.PictureUploadRequest;
 import com.yb.icgapi.model.entity.Picture;
 import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.model.vo.PictureTagCategory;
 import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.service.PictureService;
 import com.yb.icgapi.service.UserService;
@@ -164,5 +166,14 @@ public class PictureController {
         boolean res = pictureService.updateById(picture);
         ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "编辑图片失败");
         return ResultUtils.success(true);
+    }
+    @GetMapping("/tag_category")
+    public BaseResponse<PictureTagCategory> listPictureTagCategory() {
+        PictureTagCategory pictureTagCategory = new PictureTagCategory();
+        List<String> tagList = Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意");
+        List<String> categoryList = Arrays.asList("模板", "电商", "表情包", "素材", "海报");
+        pictureTagCategory.setTagList(tagList);
+        pictureTagCategory.setCategoryList(categoryList);
+        return ResultUtils.success(pictureTagCategory);
     }
 }
