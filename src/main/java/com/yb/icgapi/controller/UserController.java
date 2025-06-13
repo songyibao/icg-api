@@ -94,7 +94,7 @@ public class UserController {
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest) {
         ThrowUtils.ThrowIf(deleteRequest == null, ErrorCode.PARAM_BLANK);
         Long id = deleteRequest.getId();
-        ThrowUtils.ThrowIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.ThrowIf(id==null || id <= 0, ErrorCode.PARAM_BLANK);
         boolean res = userService.removeById(id);
         ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "删除用户失败");
         return ResultUtils.success(true);

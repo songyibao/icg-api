@@ -136,7 +136,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 排序
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals(DatabaseConstant.ASC), sortField);
 
-        return null;
+        return queryWrapper;
     }
 
     @Override

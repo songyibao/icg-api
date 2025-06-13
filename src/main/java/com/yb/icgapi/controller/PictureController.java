@@ -114,7 +114,7 @@ public class PictureController {
         ThrowUtils.ThrowIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
         ThrowUtils.ThrowIf(picture == null, ErrorCode.NOT_FOUND, "图片不存在");
-        return ResultUtils.success(PictureVO.objToVo(picture));
+        return ResultUtils.success(pictureService.getPictureVO(picture));
     }
 
     @PostMapping("/list/page")

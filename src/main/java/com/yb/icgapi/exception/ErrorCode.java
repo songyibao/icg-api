@@ -5,9 +5,9 @@ import lombok.Getter;
 @Getter
 public enum ErrorCode {
     SUCCESS(0,"OK"),
-    NOT_LOGIN_ERROR(40000,"未登陆"),
-    PARAMS_ERROR(40100,"请求参数错误"),
-    PARAM_BLANK(40101,"<UNK>"),
+    NOT_LOGIN_ERROR(40100,"未登陆"),
+    PARAMS_ERROR(40102,"请求参数错误"),
+    PARAM_BLANK(40101,"缺少请求参数"),
     PASSWORD_NOT_MATCH(40102,"两次密码不匹配"),
     PASSWORD_TOO_SHORT(40103,"密码过短"),
     PASSWORD_ERROR(40104,"密码错误"),
