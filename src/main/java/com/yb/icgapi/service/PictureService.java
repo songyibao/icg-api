@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yb.icgapi.model.dto.picture.PictureQueryRequest;
 import com.yb.icgapi.model.dto.picture.PictureReviewRequest;
+import com.yb.icgapi.model.dto.picture.PictureUploadByBatchRequest;
 import com.yb.icgapi.model.dto.picture.PictureUploadRequest;
 import com.yb.icgapi.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -22,7 +23,7 @@ import java.util.List;
 public interface PictureService extends IService<Picture> {
 
 
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser);
     public QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
     public PictureVO getPictureVO(Picture picture);
 
@@ -37,4 +38,6 @@ public interface PictureService extends IService<Picture> {
     void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
 
     void fillReviewParams(Picture picture, User loginUser);
+
+    Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 }

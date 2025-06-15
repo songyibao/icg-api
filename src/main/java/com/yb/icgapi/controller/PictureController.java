@@ -3,6 +3,8 @@ package com.yb.icgapi.controller;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -48,6 +50,19 @@ public class PictureController {
                                                  HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
+    }
+
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureUrl(@RequestBody PictureUploadRequest pictureUploadRequest,
+                                                    HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        // 校验图片
+        ThrowUtils.ThrowIf(pictureUploadRequest == null, ErrorCode.PARAM_BLANK);
+        String fileUrl = pictureUploadRequest.getFileUrl();
+        ThrowUtils.ThrowIf(StrUtil.isBlank(fileUrl), ErrorCode.PARAM_BLANK, "图片地址不能为空");
+        // 上传图片
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
     }
     /**
@@ -193,5 +208,15 @@ public class PictureController {
         User loginUser = userService.getLoginUser(request);
         pictureService.doPictureReview(pictureReviewRequest, loginUser);
         return ResultUtils.success(true);
+    }
+
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
+                                                 HttpServletRequest request) {
+        ThrowUtils.ThrowIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        Integer uploaded = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploaded);
     }
 }
