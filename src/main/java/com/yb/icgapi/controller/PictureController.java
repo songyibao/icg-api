@@ -15,12 +15,10 @@ import com.yb.icgapi.constant.UserConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
-import com.yb.icgapi.model.dto.picture.PictureEditRequest;
-import com.yb.icgapi.model.dto.picture.PictureQueryRequest;
-import com.yb.icgapi.model.dto.picture.PictureUpdateRequest;
-import com.yb.icgapi.model.dto.picture.PictureUploadRequest;
+import com.yb.icgapi.model.dto.picture.*;
 import com.yb.icgapi.model.entity.Picture;
 import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.vo.PictureTagCategory;
 import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.service.PictureService;
@@ -45,7 +43,6 @@ public class PictureController {
 
 
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile,
                                                  PictureUploadRequest pictureUploadRequest,
                                                  HttpServletRequest request) {
@@ -82,7 +79,7 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest,HttpServletRequest request) {
         ThrowUtils.ThrowIf(pictureUpdateRequest == null, ErrorCode.PARAM_BLANK);
         ThrowUtils.ThrowIf(pictureUpdateRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
 
@@ -95,6 +92,9 @@ public class PictureController {
         // 判断旧图片是否存在
         Picture oldPicture = pictureService.getById(picture.getId());
         ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
+        // 补充审核参数
+        User loginUser = userService.getLoginUser(request);
+        pictureService.fillReviewParams(picture, loginUser);
         // 更新图片信息
         boolean res = pictureService.updateById(picture);
         ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "更新图片失败");
@@ -134,6 +134,11 @@ public class PictureController {
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
         long currentPage = pictureQueryRequest.getCurrentPage();
         long pageSize = pictureQueryRequest.getPageSize();
+        // 普通用户默认只能查看已经过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        // 普通用户也不会获得审核信息字段
+        pictureQueryRequest.setReviewerId(null);
+        pictureQueryRequest.setReviewMessage(null);
 
         Page<Picture> page = pictureService.page(
                 new Page<>(currentPage, pageSize),
@@ -163,6 +168,9 @@ public class PictureController {
         if(!oldPicture.getUserId().equals(loginUser.getId()) && !loginUser.getUserRole().equals(UserConstant.ADMIN_ROLE)) {
             throw new BusinessException(ErrorCode.NO_AUTHORIZED);
         }
+        // 补充审核参数
+        pictureService.fillReviewParams(picture, loginUser);
+        // 更新图片信息
         boolean res = pictureService.updateById(picture);
         ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "编辑图片失败");
         return ResultUtils.success(true);
@@ -175,5 +183,15 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return ResultUtils.success(pictureTagCategory);
+    }
+
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                                 HttpServletRequest request) {
+        ThrowUtils.ThrowIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
     }
 }
