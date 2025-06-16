@@ -7,11 +7,16 @@ import java.util.*;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.yb.icgapi.annotation.MultiLevelCache;
+import com.yb.icgapi.common.ResultUtils;
 import com.yb.icgapi.constant.DatabaseConstant;
+import com.yb.icgapi.constant.GlobalConstant;
 import com.yb.icgapi.constant.PictureConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
@@ -39,7 +44,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -196,7 +203,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     @Override
-    public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request) {
+    public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage) {
         List<Picture> pictureList = picturePage.getRecords();
         Page<PictureVO> pictureVOPage = new Page<>(picturePage.getCurrent(), picturePage.getSize(), picturePage.getTotal());
         if (CollUtil.isEmpty(pictureList)) {
@@ -224,6 +231,24 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         });
         pictureVOPage.setRecords(pictureVOList);
         return pictureVOPage;
+    }
+
+    @Override
+    @MultiLevelCache(KeyPrefix = "listPictureVOByPage", expireTime = 300, randomRange = 300)
+    public Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest) {
+        long currentPage = pictureQueryRequest.getCurrentPage();
+        long pageSize = pictureQueryRequest.getPageSize();
+        // 普通用户默认只能查看已经过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        // 普通用户也不会获得审核信息字段
+        pictureQueryRequest.setReviewerId(null);
+        pictureQueryRequest.setReviewMessage(null);
+
+        Page<Picture> page = this.page(
+                new Page<>(currentPage, pageSize),
+                this.getQueryWrapper(pictureQueryRequest)
+        );
+        return this.getPictureVOPage(page);
     }
 
     @Override

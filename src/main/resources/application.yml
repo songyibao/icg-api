@@ -54,4 +54,6 @@ cos:
     secretKey: ${COS_SECRET_KEY}
     region: ${COS_REGION}
     bucket: ${COS_BUCKET}
-
+logging:
+  level:
+    root: info

@@ -1,15 +1,16 @@
 package com.yb.icgapi.controller;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yb.icgapi.annotation.AuthCheck;
 import com.yb.icgapi.common.BaseResponse;
 import com.yb.icgapi.common.DeleteRequest;
@@ -27,10 +28,7 @@ import com.yb.icgapi.model.vo.PictureTagCategory;
 import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.service.PictureService;
 import com.yb.icgapi.service.UserService;
-import io.github.classgraph.json.JSONUtils;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.DigestUtils;
@@ -49,6 +47,8 @@ public class PictureController {
     private PictureService pictureService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+
 
 
     @PostMapping("/upload")
@@ -166,43 +166,13 @@ public class PictureController {
                 new Page<>(currentPage, pageSize),
                 pictureService.getQueryWrapper(pictureQueryRequest)
         );
-        return ResultUtils.success(pictureService.getPictureVOPage(page,request));
+        return ResultUtils.success(pictureService.getPictureVOPage(page));
     }
 
     @PostMapping("/list/page/vo/cache")
-    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
-        long currentPage = pictureQueryRequest.getCurrentPage();
-        long pageSize = pictureQueryRequest.getPageSize();
-        // 普通用户默认只能查看已经过审的数据
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
-        // 普通用户也不会获得审核信息字段
-        pictureQueryRequest.setReviewerId(null);
-        pictureQueryRequest.setReviewMessage(null);
-
-        // 查询缓存，没有命中再查询数据库
-        // 构建缓存的key
-        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
-        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String redisKey = String.format("%s:listPictureVOByPage:%s", GlobalConstant.APPLICATION_NAME, hashKey);
-        // 操作redis，从缓存中查询
-        ValueOperations<String, String> opsForValue = stringRedisTemplate.opsForValue();
-        String cachedValue = opsForValue.get(redisKey);
-        if(cachedValue!=null){
-            // 如果缓存命中，缓存结果
-            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
-            return ResultUtils.success(cachedPage);
-        }
-        // 如果缓存未命中，查询数据库
-        Page<Picture> page = pictureService.page(
-                new Page<>(currentPage, pageSize),
-                pictureService.getQueryWrapper(pictureQueryRequest)
-        );
-        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(page, request);
-        // 将查询结果存入缓存
-        String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
-        // 设置缓存过期时间，5-10分钟过期，防止缓存雪崩
-        int cacheExpireTime = 300+ RandomUtil.randomInt(0,300);
-        opsForValue.set(redisKey,cacheValue,cacheExpireTime);
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest) {
+        ThrowUtils.ThrowIf(pictureQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        Page<PictureVO> pictureVOPage = pictureService.listPictureVOByPage(pictureQueryRequest);
         return ResultUtils.success(pictureVOPage);
     }
 

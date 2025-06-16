@@ -27,7 +27,8 @@ public interface PictureService extends IService<Picture> {
     public QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
     public PictureVO getPictureVO(Picture picture);
 
-    public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage,HttpServletRequest request);
+    public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
+    public Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest);
     public void validPicture(Picture picture);
     /**
      * 图片审核
