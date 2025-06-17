@@ -79,6 +79,7 @@ public class MultiLevelCacheAspect {
         String cachedValue = LOCAL_CACHE.getIfPresent(cacheKey);
         if (cachedValue != null) {
             log.info("缓存命中:[Local] key: {}", cacheKey);
+            log.info("cachedValue:{}", cachedValue);
             return objectMapper.readValue(cachedValue, new TypeReference<Object>() {
                 @Override
                 public Type getType() {
@@ -91,6 +92,7 @@ public class MultiLevelCacheAspect {
         cachedValue = stringRedisTemplate.opsForValue().get(cacheKey);
         if (cachedValue != null) {
             log.info("缓存命中:[Redis] key: {}", cacheKey);
+            log.info("cachedValue:{}", cachedValue);
             // 将Redis缓存的值放入本地缓存
             LOCAL_CACHE.put(cacheKey, cachedValue);
             return objectMapper.readValue(cachedValue, new TypeReference<Object>() {
@@ -118,5 +120,4 @@ public class MultiLevelCacheAspect {
         }
         return dbResult;
     }
-
 }
