@@ -21,6 +21,7 @@ import com.yb.icgapi.constant.PictureConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.manager.CosManager;
 import com.yb.icgapi.manager.FilePictureUpload;
 import com.yb.icgapi.manager.UrlPictureUpload;
 import com.yb.icgapi.manager.upload.PictureUploadTemplate;
@@ -44,7 +45,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,6 +74,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     UrlPictureUpload urlPictureUpload;
+    @Autowired
+    private CosManager cosManager;
 
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
@@ -373,6 +378,27 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
         return uploadedCount;
+    }
+
+    @Async
+    @Override
+    public void clearPictureFile(Picture oldPicture) {
+        // 如果需要，还应该先判断图片是否被多条记录关联,这里模拟一下判断
+        String pictureUrl = oldPicture.getUrl();
+        Long count = this.lambdaQuery()
+                .eq(Picture::getUrl, pictureUrl)
+                .count();
+        if (count > 1) {
+            log.error("图片 {} 被多条记录关联，无法删除文件", pictureUrl);
+            return; // 如果被多条记录关联，则不删除文件
+        }
+        // 删除图片
+        cosManager.deleteObject(pictureUrl);
+        // 删除缩略图
+        if( StrUtil.isNotBlank(oldPicture.getThumbnailUrl())) {
+            cosManager.deleteObject(oldPicture.getThumbnailUrl());
+        }
+
     }
 
 

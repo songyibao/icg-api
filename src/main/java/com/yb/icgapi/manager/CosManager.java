@@ -7,6 +7,8 @@ import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
 import com.yb.icgapi.config.CosClientConfig;
 import com.yb.icgapi.constant.PictureConstant;
+import com.yb.icgapi.exception.BusinessException;
+import com.yb.icgapi.exception.ErrorCode;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -70,6 +72,10 @@ public class CosManager {
         picOperations.setRules(rules);
         putObjectRequest.setPicOperations(picOperations);
         return cosClient.putObject(putObjectRequest);
+    }
+
+    public void deleteObject(String key){
+        cosClient.deleteObject(cosClientConfig.getBucket(), key);
     }
 
 

@@ -90,6 +90,8 @@ public class PictureController {
         // 操作数据库
         boolean res = pictureService.removeById(id);
         ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "删除图片失败");
+        // 清理图片文件
+        pictureService.clearPictureFile(oldPicture);
         return ResultUtils.success(true);
     }
 
