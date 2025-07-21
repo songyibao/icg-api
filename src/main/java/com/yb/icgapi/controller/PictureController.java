@@ -1,21 +1,16 @@
 package com.yb.icgapi.controller;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yb.icgapi.annotation.AuthCheck;
 import com.yb.icgapi.common.BaseResponse;
 import com.yb.icgapi.common.DeleteRequest;
 import com.yb.icgapi.common.ResultUtils;
-import com.yb.icgapi.constant.GlobalConstant;
 import com.yb.icgapi.constant.UserConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
@@ -27,11 +22,11 @@ import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.vo.PictureTagCategory;
 import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.service.PictureService;
+import com.yb.icgapi.service.SpaceService;
 import com.yb.icgapi.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,8 +42,8 @@ public class PictureController {
     private PictureService pictureService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-
-
+    @Autowired
+    private SpaceService spaceService;
 
 
     @PostMapping("/upload")
@@ -72,38 +67,29 @@ public class PictureController {
         PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
     }
+
     /**
      * 删除图片（仅限本人或者管理员，在内部进行逻辑校验，不使用注解）
      */
     @PostMapping("/delete")
     public BaseResponse<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        ThrowUtils.ThrowIf(deleteRequest==null || deleteRequest.getId() == null || deleteRequest.getId()<0,ErrorCode.PARAMS_ERROR);
+        ThrowUtils.ThrowIf(deleteRequest == null || deleteRequest.getId() == null ||
+                deleteRequest.getId() < 0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
-        long id = deleteRequest.getId();
-        Picture oldPicture = pictureService.getById(id);
-        // 判断是否存在
-        ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
-        // 判断是否是本人或者管理员
-        if(!oldPicture.getUserId().equals(loginUser.getId()) && !loginUser.getUserRole().equals(UserConstant.ADMIN_ROLE)) {
-            throw new BusinessException(ErrorCode.NO_AUTHORIZED);
-        }
-        // 操作数据库
-        boolean res = pictureService.removeById(id);
-        ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "删除图片失败");
-        // 清理图片文件
-        pictureService.clearPictureFile(oldPicture);
+        pictureService.deletePicture(deleteRequest.getId(), loginUser);
         return ResultUtils.success(true);
     }
 
 
     /**
      * 更新图片信息（仅限管理员）
+     *
      * @param pictureUpdateRequest 图片更新请求
      * @return 更新结果
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest,HttpServletRequest request) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest, HttpServletRequest request) {
         ThrowUtils.ThrowIf(pictureUpdateRequest == null, ErrorCode.PARAM_BLANK);
         ThrowUtils.ThrowIf(pictureUpdateRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
 
@@ -124,9 +110,10 @@ public class PictureController {
         ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "更新图片失败");
         return ResultUtils.success(true);
     }
+
     @GetMapping("/get")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Picture> getPictureById(@RequestParam("id") Long id,HttpServletRequest request) {
+    public BaseResponse<Picture> getPictureById(@RequestParam("id") Long id, HttpServletRequest request) {
         ThrowUtils.ThrowIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
         ThrowUtils.ThrowIf(picture == null, ErrorCode.NOT_FOUND, "图片不存在");
@@ -134,10 +121,12 @@ public class PictureController {
     }
 
     @GetMapping("/get/vo")
-    public BaseResponse<PictureVO> getPictureVOById(@RequestParam("id") Long id,HttpServletRequest request) {
+    public BaseResponse<PictureVO> getPictureVOById(@RequestParam("id") Long id, HttpServletRequest request) {
         ThrowUtils.ThrowIf(id <= 0, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(id);
         ThrowUtils.ThrowIf(picture == null, ErrorCode.NOT_FOUND, "图片不存在");
+        User loginUser = userService.getLoginUser(request);
+        pictureService.checkPictureAuth(loginUser, picture);
         return ResultUtils.success(pictureService.getPictureVO(picture));
     }
 
@@ -158,8 +147,17 @@ public class PictureController {
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
         long currentPage = pictureQueryRequest.getCurrentPage();
         long pageSize = pictureQueryRequest.getPageSize();
-        // 普通用户默认只能查看已经过审的数据
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        // 空间权限校验
+
+        Long spaceId = pictureQueryRequest.getSpaceId();
+        // 普通用户默认只能查看已经过审的数据(仅针对公共空间)
+        if(spaceId == null){
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        }else{
+            // 私有空间，校验权限
+            User loginUser = userService.getLoginUser(request);
+            spaceService.checkSpaceAuth(loginUser, spaceId);
+        }
         // 普通用户也不会获得审核信息字段
         pictureQueryRequest.setReviewerId(null);
         pictureQueryRequest.setReviewMessage(null);
@@ -182,30 +180,11 @@ public class PictureController {
     public BaseResponse<Boolean> editPicture(@RequestBody PictureEditRequest pictureEditRequest, HttpServletRequest request) {
         ThrowUtils.ThrowIf(pictureEditRequest == null, ErrorCode.PARAM_BLANK);
         ThrowUtils.ThrowIf(pictureEditRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
-
-        Picture picture = new Picture();
-        BeanUtils.copyProperties(pictureEditRequest, picture);
-        // 注意将tags转string
-        picture.setTags(JSONUtil.toJsonStr(pictureEditRequest.getTags()));
-        // 设置编辑时间
-        picture.setEditTime(new Date());
-        // 数据校验
-        pictureService.validPicture(picture);
         User loginUser = userService.getLoginUser(request);
-        // 判断旧图片是否存在
-        Picture oldPicture = pictureService.getById(picture.getId());
-        ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
-        // 仅本人和管理员可编辑
-        if(!oldPicture.getUserId().equals(loginUser.getId()) && !loginUser.getUserRole().equals(UserConstant.ADMIN_ROLE)) {
-            throw new BusinessException(ErrorCode.NO_AUTHORIZED);
-        }
-        // 补充审核参数
-        pictureService.fillReviewParams(picture, loginUser);
-        // 更新图片信息
-        boolean res = pictureService.updateById(picture);
-        ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "编辑图片失败");
+        pictureService.editPicture(pictureEditRequest,loginUser);
         return ResultUtils.success(true);
     }
+
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
@@ -229,7 +208,7 @@ public class PictureController {
     @PostMapping("/upload/batch")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
-                                                 HttpServletRequest request) {
+                                                      HttpServletRequest request) {
         ThrowUtils.ThrowIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         Integer uploaded = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);

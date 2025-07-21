@@ -114,6 +114,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public UserVO getUserVOById(Long id) {
+        // 参数校验
+        ThrowUtils.ThrowIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR, "用户id无效");
+        // 查询用户
+        User user = this.getById(id);
+        ThrowUtils.ThrowIf(user == null, ErrorCode.NOT_FOUND, "用户不存在");
+        // 转换为VO对象
+        // 返回用户视图对象
+        return UserVO.objToVO(user);
+    }
+
+    @Override
     public void userLogout(HttpServletRequest request) {
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         if (userObj == null) {

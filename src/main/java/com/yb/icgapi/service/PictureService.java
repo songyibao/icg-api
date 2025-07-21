@@ -2,10 +2,8 @@ package com.yb.icgapi.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.yb.icgapi.model.dto.picture.PictureQueryRequest;
-import com.yb.icgapi.model.dto.picture.PictureReviewRequest;
-import com.yb.icgapi.model.dto.picture.PictureUploadByBatchRequest;
-import com.yb.icgapi.model.dto.picture.PictureUploadRequest;
+import com.yb.icgapi.common.DeleteRequest;
+import com.yb.icgapi.model.dto.picture.*;
 import com.yb.icgapi.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yb.icgapi.model.entity.User;
@@ -42,5 +40,13 @@ public interface PictureService extends IService<Picture> {
 
     Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 
+
+    void editPicture(PictureEditRequest pictureEditRequest,
+                     User loginUser);
+
+    void deletePicture(long id, User loginUser);
+
     void clearPictureFile(Picture oldPicture);
+
+    void checkPictureAuth(User user, Picture picture);
 }

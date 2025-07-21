@@ -14,6 +14,7 @@ public enum ErrorCode {
     USER_EXIST(40105,"账号已存在"),
     NO_AUTHORIZED(40300,"无权限操作"),
     NOT_FOUND(40400,"资源未找到"),
+    OPERATION_ERROR(40500,"操作失败"),
     SERVER_ERROR(50000,"内部异常");
 
     private final int code;

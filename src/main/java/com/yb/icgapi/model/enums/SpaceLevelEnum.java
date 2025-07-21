@@ -27,7 +27,7 @@ public enum SpaceLevelEnum {
                 return level;
             }
         }
-        throw new BusinessException(ErrorCode.SERVER_ERROR);
+        return null;
     }
 
 }
