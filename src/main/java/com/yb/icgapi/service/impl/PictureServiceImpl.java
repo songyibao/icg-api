@@ -12,7 +12,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.yb.icgapi.annotation.MultiLevelCache;
 import com.yb.icgapi.constant.DatabaseConstant;
 import com.yb.icgapi.constant.PictureConstant;
