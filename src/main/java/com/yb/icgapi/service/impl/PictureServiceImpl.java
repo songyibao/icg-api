@@ -170,7 +170,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }else{
             // 上传图片
             Boolean execute_res = transactionTemplate.execute(status -> {
-                // 插入或更新
                 boolean res = this.saveOrUpdate(picture);
                 ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "图片上传失败");
                 // 更新空间使用额度

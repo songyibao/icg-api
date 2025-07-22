@@ -27,6 +27,7 @@ import com.yb.icgapi.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,11 +47,15 @@ public class PictureController {
     private SpaceService spaceService;
 
 
-    @PostMapping("/upload")
-    public BaseResponse<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile,
-                                                 PictureUploadRequest pictureUploadRequest,
-                                                 HttpServletRequest request) {
+    @PostMapping(value = "/upload")
+    public BaseResponse<PictureVO> uploadPicture(
+            // 关键改动：去掉 @RequestBody 注解
+            PictureUploadRequest pictureUploadRequest,
+            @RequestPart("file") MultipartFile multipartFile,
+            HttpServletRequest request) {
+
         User loginUser = userService.getLoginUser(request);
+        // 业务逻辑不变
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
     }
@@ -151,9 +156,9 @@ public class PictureController {
 
         Long spaceId = pictureQueryRequest.getSpaceId();
         // 普通用户默认只能查看已经过审的数据(仅针对公共空间)
-        if(spaceId == null){
+        if (spaceId == null) {
             pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
-        }else{
+        } else {
             // 私有空间，校验权限
             User loginUser = userService.getLoginUser(request);
             spaceService.checkSpaceAuth(loginUser, spaceId);
@@ -181,7 +186,7 @@ public class PictureController {
         ThrowUtils.ThrowIf(pictureEditRequest == null, ErrorCode.PARAM_BLANK);
         ThrowUtils.ThrowIf(pictureEditRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
-        pictureService.editPicture(pictureEditRequest,loginUser);
+        pictureService.editPicture(pictureEditRequest, loginUser);
         return ResultUtils.success(true);
     }
 
