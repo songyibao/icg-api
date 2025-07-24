@@ -23,6 +23,9 @@ public class FilePictureUpload extends PictureUploadTemplate {
         ThrowUtils.ThrowIf(fileSize > PictureConstant.PICTURE_SIZE_MAX, ErrorCode.PARAMS_ERROR, "文件大小不能超过 2M");
         // 2. 校验文件后缀，简单校验，不健壮
         String fileSuffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
+        if(fileSuffix != null){
+            fileSuffix = fileSuffix.toLowerCase(); // 转为小写，避免大小写问题
+        }
         // 允许上传的文件后缀
         final List<String> ALLOW_FORMAT_LIST = Arrays.asList("jpeg", "jpg", "png", "webp");
         ThrowUtils.ThrowIf(!ALLOW_FORMAT_LIST.contains(fileSuffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
