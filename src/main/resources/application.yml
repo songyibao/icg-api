@@ -28,6 +28,18 @@ spring:
     store-type: redis
     # session 过期时间
     timeout: 2592000 # 30天
+  # RabbitMQ 配置
+  rabbitmq:
+    host: ${MQ_HOST:localhost}
+    port: ${MQ_PORT:5672}
+    username: ${MQ_USER:guest}
+    password: ${MQ_PASS:guest}
+    publisher-confirm-type: correlated # 开启发送确认
+    publisher-returns: true # 开启发送失败回调
+    listener:
+      simple:
+        acknowledge-mode: manual # 手动确认
+        prefetch: 10 # 预拉取消息数量
 
 mybatis-plus:
   configuration:
@@ -61,6 +73,12 @@ cos:
     secretKey: ${COS_SECRET_KEY}
     region: ${COS_REGION}
     bucket: ${COS_BUCKET}
+
+# AI处理队列配置
+ai:
+  queue:
+    name: ${MQ_QUEUE_NAME:ai_processing_queue}
+
 logging:
   level:
     root: info

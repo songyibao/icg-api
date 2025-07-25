@@ -30,6 +30,7 @@ import com.yb.icgapi.model.entity.User;
 import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.model.vo.UserVO;
+import com.yb.icgapi.service.AIMessageService;
 import com.yb.icgapi.service.PictureService;
 import com.yb.icgapi.mapper.PictureMapper;
 import com.yb.icgapi.service.UserService;
@@ -74,6 +75,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private TransactionTemplate transactionTemplate;
 
+    @Resource
+    private AIMessageService aiMessageService;
+
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         ThrowUtils.ThrowIf(inputSource == null, ErrorCode.PARAMS_ERROR, "上传的文件不能为空");
@@ -99,7 +103,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 if(space.getTotalSize() >= space.getMaxSize()){
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "已达到容量大小限制，无法上传图片");
                 }
-
             }
         }else{
             // 更新图片，不进行空间额度校验
@@ -107,8 +110,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
             // 校验图片操作权限
             this.checkPictureAuth(loginUser, oldPicture);
-            // 防止更新时空间id被篡改
-            if(!spaceId.equals(oldPicture.getSpaceId())){
+            // 防止更新时空间id被篡改(如果有)
+            if(spaceId!=null && !spaceId.equals(oldPicture.getSpaceId())){
                 throw new BusinessException(ErrorCode.PARAMS_ERROR);
             }
         }
@@ -157,30 +160,61 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 // 插入或更新
                 boolean res = this.saveOrUpdate(picture);
                 ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "图片上传失败");
-                // 更新空间使用额度
-                res = spaceService.lambdaUpdate()
-                        .eq(Space::getId, spaceId)
-                        .setSql("totalSize = totalSize + " + (picture.getPicSize()-oldPicture.getPicSize()))
-                        .update();
+                if(spaceId != null){
+                    // 更新空间使用额度
+                    res = spaceService.lambdaUpdate()
+                            .eq(Space::getId, spaceId)
+                            .setSql("totalSize = totalSize + " + (picture.getPicSize()-oldPicture.getPicSize()))
+                            .update();
+                }
                 return res;
             });
             ThrowUtils.ThrowIf(!Boolean.TRUE.equals(execute_res), ErrorCode.SERVER_ERROR, "图片上传失败");
             // 清理旧图片文件
             this.clearPictureFile(oldPicture);
+
+            // 发送AI处理消息 - 更新图片时也需要重新处理
+            try {
+                aiMessageService.sendAIProcessingMessage(
+                    picture.getId().toString(),
+                    picture.getUrl(),
+                    loginUser.getId().toString(),
+                    true // 更新图片时强制重新处理
+                );
+                log.info("图片更新后AI处理消息发送成功，图片ID: {}", picture.getId());
+            } catch (Exception e) {
+                log.error("图片更新后AI处理消息发送失败，图片ID: {}, 错误: {}", picture.getId(), e.getMessage(), e);
+            }
         }else{
             // 上传图片
             Boolean execute_res = transactionTemplate.execute(status -> {
                 boolean res = this.saveOrUpdate(picture);
                 ThrowUtils.ThrowIf(!res, ErrorCode.SERVER_ERROR, "图片上传失败");
-                // 更新空间使用额度
-                res = spaceService.lambdaUpdate()
-                        .eq(Space::getId, spaceId)
-                        .setSql("totalSize = totalSize + " + picture.getPicSize())
-                        .setSql("totalCount = totalCount + 1")
-                        .update();
+                if(spaceId != null){
+                    // 更新空间使用额度
+                    res = spaceService.lambdaUpdate()
+                            .eq(Space::getId, spaceId)
+                            .setSql("totalSize = totalSize + " + picture.getPicSize())
+                            .setSql("totalCount = totalCount + 1")
+                            .update();
+                }
+
                 return res;
             });
             ThrowUtils.ThrowIf(!Boolean.TRUE.equals(execute_res), ErrorCode.SERVER_ERROR, "图片上传失败");
+
+            // 发送AI处理消息 - 新上传的图片
+            try {
+                aiMessageService.sendAIProcessingMessage(
+                    picture.getId().toString(),
+                    picture.getUrl(),
+                    loginUser.getId().toString(),
+                    false // 新图片不需要强制重新处理
+                );
+                log.info("新图片上传后AI处理消息发送成功，图片ID: {}", picture.getId());
+            } catch (Exception e) {
+                log.error("新图片上传后AI处理消息发送失败，图片ID: {}, 错误: {}", picture.getId(), e.getMessage(), e);
+            }
         }
         return PictureVO.objToVo(picture);
     }
@@ -212,6 +246,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         String reviewMessage = pictureQueryRequest.getReviewMessage();
         Long reviewerId = pictureQueryRequest.getReviewerId();
         Long spaceId = pictureQueryRequest.getSpaceId();
+        Date startEditTime = pictureQueryRequest.getStartEditTime();
+        Date endEditTime = pictureQueryRequest.getEndEditTime();
+
+
         // 添加查询条件
         if (StrUtil.isNotBlank(searchText)) {
             queryWrapper.and(wrapper -> wrapper
@@ -226,6 +264,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 如果有空间id，则查询该空间下的图片
             queryWrapper.eq("spaceId", spaceId);
         }
+
         queryWrapper.eq(ObjUtil.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjUtil.isNotEmpty(userId), "userId", userId);
         queryWrapper.like(StrUtil.isNotBlank(name), "name", name);
@@ -239,6 +278,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
         queryWrapper.like(StrUtil.isNotBlank(reviewMessage), "reviewMessage", reviewMessage);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
+        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
+        queryWrapper.le(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
+
 
         // JSON数组查询
         if (CollUtil.isNotEmpty(tags)) {
@@ -561,7 +603,3 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
 }
-
-
-
-
