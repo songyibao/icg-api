@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yb.icgapi.mapper.AiPersonClusterMapper">
+
+    <resultMap id="areaResultMap" type="com.yb.icgapi.model.dto.AiPersonCluster.AiPersonClusterDTO">
+        <id property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="displayName" column="displayName"/>
+        <result property="coverFaceId" column="coverFaceId"/>
+        <result property="faceCount" column="faceCount"/>
+        <result property="createTime" column="createTime"/>
+        <result property="updateTime" column="updateTime"/>
+        <result property="coverFacePictureUrl" column="coverFacePictureUrl"/>
+        <result property="coverFaceArea" column="coverFaceArea" javaType="cn.hutool.json.JSONObject"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,userId,displayName,coverFaceId,faceCount,createTime,
+        updateTime
+    </sql>
+
+    <select id="listClusterWithCoverUrl" resultMap="areaResultMap">
+        SELECT c.*,
+               p.url  AS coverFacePictureUrl,
+               f.area AS coverFaceArea
+        FROM ai_person_cluster c
+                 LEFT JOIN
+             ai_detected_face f ON c.coverFaceId = f.id
+                 LEFT JOIN
+             picture p ON f.pictureId = p.id
+        WHERE c.userId = #{userId}
+    </select>
+</mapper>

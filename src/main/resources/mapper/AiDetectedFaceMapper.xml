@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yb.icgapi.mapper.AiDetectedFaceMapper">
+
+    <resultMap id="BaseResultMap" type="com.yb.icgapi.model.entity.AiDetectedFace">
+            <id property="id" column="id" />
+            <result property="pictureId" column="pictureId" />
+            <result property="clusterId" column="clusterId" />
+            <result property="area" column="area" />
+            <result property="confidence" column="confidence" />
+            <result property="embedding" column="embedding" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,pictureId,clusterId,area,confidence,embedding
+    </sql>
+</mapper>

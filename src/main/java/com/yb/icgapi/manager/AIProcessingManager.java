@@ -24,8 +24,8 @@ public class AIProcessingManager {
      * 发送图片AI处理消息
      * 
      * @param pictureId 图片ID
-     * @param imageUrl 图片URL
-     * @param userId 用户ID
+     * @param imageUrl 图片URL（已弃用，新格式不需要）
+     * @param userId 用户ID（已弃用，新格式不需要）
      * @param isUpdate 是否为更新操作
      */
     public void sendPictureProcessingMessage(String pictureId, String imageUrl, String userId, boolean isUpdate) {
@@ -36,7 +36,8 @@ public class AIProcessingManager {
             log.info("准备发送AI处理消息 - 图片ID: {}, 用户ID: {}, 是否更新: {}, 强制重处理: {}", 
                     pictureId, userId, isUpdate, forceReprocess);
             
-            aiMessageService.sendAIProcessingMessage(pictureId, imageUrl, userId, forceReprocess);
+            // 使用新的单图处理消息格式
+            aiMessageService.sendSingleProcessMessage(Long.valueOf(pictureId), forceReprocess);
             
             log.info("AI处理消息发送成功 - 图片ID: {}", pictureId);
             

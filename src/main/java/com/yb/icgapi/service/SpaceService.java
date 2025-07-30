@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yb.icgapi.model.dto.picture.PictureQueryRequest;
 import com.yb.icgapi.model.dto.space.SpaceAddRequest;
 import com.yb.icgapi.model.dto.space.SpaceQueryRequest;
+import com.yb.icgapi.model.entity.Picture;
 import com.yb.icgapi.model.entity.Space;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yb.icgapi.model.entity.User;
@@ -29,4 +30,5 @@ public interface SpaceService extends IService<Space> {
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser);
 
     void checkSpaceAuth(User user, Long spaceId);
+
 }

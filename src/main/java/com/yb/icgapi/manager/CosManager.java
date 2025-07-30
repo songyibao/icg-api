@@ -52,12 +52,13 @@ public class CosManager {
         // 图片处理规则
         List<PicOperations.Rule> rules = new ArrayList<>();
         // 图片压缩（转成 webp 格式）
-        String webpKey = FileUtil.mainName(key) + ".webp";
-        PicOperations.Rule compressRule = new PicOperations.Rule();
-        compressRule.setRule("imageMogr2/format/webp");
-        compressRule.setBucket(cosClientConfig.getBucket());
-        compressRule.setFileId(webpKey);
-        rules.add(compressRule);
+        // 禁用，最好保留用户上传的原图
+//        String webpKey = FileUtil.mainName(key) + ".webp";
+//        PicOperations.Rule compressRule = new PicOperations.Rule();
+//        compressRule.setRule("imageMogr2/format/webp");
+//        compressRule.setBucket(cosClientConfig.getBucket());
+//        compressRule.setFileId(webpKey);
+//        rules.add(compressRule);
 
         // 缩略图处理
         String thumbnailKey = FileUtil.mainName(key) + "_thumbnail."+FileUtil.getSuffix(key);

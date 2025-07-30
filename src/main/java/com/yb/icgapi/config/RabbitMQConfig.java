@@ -45,15 +45,15 @@ public class RabbitMQConfig {
         rabbitTemplate.setMessageConverter(messageConverter());
 
         // 配置发送确认回调
-        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
-            if (ack) {
-                // 消息发送成功
-                System.out.println("消息发送成功");
-            } else {
-                // 消息发送失败
-                System.err.println("消息发送失败，原因：" + cause);
-            }
-        });
+//        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+//            if (ack) {
+//                // 消息发送成功
+//                System.out.println("消息发送成功");
+//            } else {
+//                // 消息发送失败
+//                System.err.println("消息发送失败，原因：" + cause);
+//            }
+//        });
 
         // 配置返回回调（当消息无法路由到队列时触发）
         rabbitTemplate.setReturnsCallback(returned -> {

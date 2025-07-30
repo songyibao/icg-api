@@ -175,10 +175,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
             // 发送AI处理消息 - 更新图片时也需要重新处理
             try {
-                aiMessageService.sendAIProcessingMessage(
-                    picture.getId().toString(),
-                    picture.getUrl(),
-                    loginUser.getId().toString(),
+                aiMessageService.sendSingleProcessMessage(
+                    picture.getId(),
                     true // 更新图片时强制重新处理
                 );
                 log.info("图片更新后AI处理消息发送成功，图片ID: {}", picture.getId());
@@ -205,10 +203,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
             // 发送AI处理消息 - 新上传的图片
             try {
-                aiMessageService.sendAIProcessingMessage(
-                    picture.getId().toString(),
-                    picture.getUrl(),
-                    loginUser.getId().toString(),
+                aiMessageService.sendSingleProcessMessage(
+                    picture.getId(),
                     false // 新图片不需要强制重新处理
                 );
                 log.info("新图片上传后AI处理消息发送成功，图片ID: {}", picture.getId());
