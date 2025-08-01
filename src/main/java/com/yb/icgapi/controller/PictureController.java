@@ -8,6 +8,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yb.icgapi.annotation.AuthCheck;
+import com.yb.icgapi.api.aliYunAi.model.CreateOutPaintingTaskResponse;
+import com.yb.icgapi.api.aliYunAi.model.GetOutPaintingTaskResponse;
+import com.yb.icgapi.api.imagesearch.ImageSearchApiFacade;
+import com.yb.icgapi.api.imagesearch.model.ImageSearchResult;
 import com.yb.icgapi.common.BaseResponse;
 import com.yb.icgapi.common.DeleteRequest;
 import com.yb.icgapi.common.ResultUtils;
@@ -218,5 +222,61 @@ public class PictureController {
         User loginUser = userService.getLoginUser(request);
         Integer uploaded = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
         return ResultUtils.success(uploaded);
+    }
+
+    /**
+     * 以图搜图
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.ThrowIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.ThrowIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND);
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(oldPicture.getUrl());
+        return ResultUtils.success(resultList);
+    }
+
+    /**
+     * 颜色搜图
+     */
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
+        ThrowUtils.ThrowIf(searchPictureByColorRequest == null, ErrorCode.PARAMS_ERROR);
+        String color = searchPictureByColorRequest.getPicColor();
+        Long sapceId = searchPictureByColorRequest.getSpaceId();
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.ThrowIf(StrUtil.isBlank(color), ErrorCode.PARAM_BLANK, "颜色不能为空");
+        ThrowUtils.ThrowIf(sapceId == null || sapceId <= 0, ErrorCode.PARAMS_ERROR, "空间ID不能为空");
+        List<PictureVO> pictureVOList = pictureService.searchPictureByColor(sapceId, color,
+                loginUser);
+        return ResultUtils.success(pictureVOList);
+    }
+
+    /**
+     * 提交AI扩图任务接口
+     */
+    @PostMapping("/out_painting/create_task")
+    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+            @RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+            HttpServletRequest request) {
+        ThrowUtils.ThrowIf(createPictureOutPaintingTaskRequest == null, ErrorCode.PARAM_BLANK);
+        Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+        ThrowUtils.ThrowIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        CreateOutPaintingTaskResponse taskResponse =
+                pictureService.createPictureOutPaintingTask(createPictureOutPaintingTaskRequest, loginUser);
+        return ResultUtils.success(taskResponse);
+    }
+    /**
+     * 查询AI扩图任务状态接口
+     */
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<GetOutPaintingTaskResponse> getOutPaintingTask(
+            @RequestParam("taskId") String taskId) {
+        ThrowUtils.ThrowIf(StrUtil.isBlank(taskId), ErrorCode.PARAM_BLANK, "任务ID不能为空");
+        GetOutPaintingTaskResponse taskResponse = pictureService.getPictureOutPaintingTask(taskId);
+        return ResultUtils.success(taskResponse);
     }
 }

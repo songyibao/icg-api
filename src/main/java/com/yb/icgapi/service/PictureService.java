@@ -2,6 +2,8 @@ package com.yb.icgapi.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yb.icgapi.api.aliYunAi.model.CreateOutPaintingTaskResponse;
+import com.yb.icgapi.api.aliYunAi.model.GetOutPaintingTaskResponse;
 import com.yb.icgapi.common.DeleteRequest;
 import com.yb.icgapi.model.dto.picture.*;
 import com.yb.icgapi.model.entity.Picture;
@@ -27,6 +29,9 @@ public interface PictureService extends IService<Picture> {
 
     public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
     public Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest);
+
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
+
     public void validPicture(Picture picture);
     /**
      * 图片审核
@@ -49,4 +54,11 @@ public interface PictureService extends IService<Picture> {
     void clearPictureFile(Picture oldPicture);
 
     void checkPictureAuth(User user, Picture picture);
+
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(
+            CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+            User loginUser);
+
+    GetOutPaintingTaskResponse getPictureOutPaintingTask(
+            String taskId);
 }

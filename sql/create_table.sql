@@ -54,6 +54,8 @@ CREATE INDEX idx_reviewStatus ON picture (reviewStatus);
 ALTER TABLE picture
     -- 添加缩略图地址列
     ADD COLUMN thumbnailUrl VARCHAR(512) NULL COMMENT '缩略图地址';
+ALTER TABLE picture
+    ADD COLUMN picColor varchar(16) null comment '图片主色调';
 
 create table if not exists space
 (

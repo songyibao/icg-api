@@ -119,6 +119,7 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setUrl(cosClientConfig.getHost() + uploadPath);
         uploadPictureResult.setThumbnailUrl(ObjUtil.isNotNull(thumbnailCiObject) ?
                 cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey() : null);
+        uploadPictureResult.setPicColor(imageInfo.getAve());
         return uploadPictureResult;
     }
 

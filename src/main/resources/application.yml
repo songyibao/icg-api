@@ -82,3 +82,7 @@ ai:
 logging:
   level:
     root: info
+
+# 阿里云百炼AI配置
+aliYunAi:
+  apiKey: ${ALIYUN_AI_API_KEY}
