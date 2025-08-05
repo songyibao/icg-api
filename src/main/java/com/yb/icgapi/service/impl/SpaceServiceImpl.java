@@ -17,6 +17,7 @@ import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.User;
 import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.enums.SpaceLevelEnum;
+import com.yb.icgapi.model.enums.SpaceTypeEnum;
 import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.model.vo.SpaceVO;
 import com.yb.icgapi.model.vo.UserVO;
@@ -62,12 +63,17 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         ThrowUtils.ThrowIf(space == null, ErrorCode.PARAM_BLANK, "空间不能为空");
         String spaceName = space.getSpaceName();
         Integer spaceLevel = space.getSpaceLevel();
+        Integer spaceType = space.getSpaceType();
         ThrowUtils.ThrowIf(StringUtils.isBlank(spaceName), ErrorCode.PARAM_BLANK, "空间名称不能为空");
         ThrowUtils.ThrowIf(StrUtil.length(spaceName) > 30, ErrorCode.PARAMS_ERROR, "空间名称过长");
         if (add) {
             ThrowUtils.ThrowIf(spaceLevel == null, ErrorCode.PARAM_BLANK, "创建时空间级别不能为空");
+            ThrowUtils.ThrowIf(spaceType == null, ErrorCode.PARAM_BLANK, "创建时空间类型不能为空");
         }
         ThrowUtils.ThrowIf(spaceLevel != null && SpaceLevelEnum.fromValue(spaceLevel) == null, ErrorCode.PARAMS_ERROR, "空间级别不合法");
+        ThrowUtils.ThrowIf(spaceType != null && SpaceTypeEnum.fromValue(spaceType) == null,
+                ErrorCode.PARAMS_ERROR,
+                "空间类型不合法");
     }
 
     @Override
@@ -106,6 +112,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         Long id = spaceQueryRequest.getId();
         String spaceName = spaceQueryRequest.getSpaceName();
         Integer spaceLevel = spaceQueryRequest.getSpaceLevel();
+        Integer spaceType = spaceQueryRequest.getSpaceType();
         Long userId = spaceQueryRequest.getUserId();
         int currentPage = spaceQueryRequest.getCurrentPage();
         int pageSize = spaceQueryRequest.getPageSize();
@@ -117,6 +124,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         queryWrapper.eq(id != null, "id", id)
                 .eq(ObjUtil.isNotEmpty(userId), "userId", userId)
                 .eq(ObjUtil.isNotEmpty(spaceLevel), "spaceLevel", spaceLevel)
+                .eq(ObjUtil.isNotEmpty(spaceType), "spaceType", spaceType)
                 .like(StringUtils.isNotBlank(spaceName), "spaceName", spaceName)
                 .orderBy(StringUtils.isNotBlank(sortField) && StringUtils.isNotBlank(sortOrder),
                         sortOrder.equals(DatabaseConstant.ASC), sortField);
@@ -181,6 +189,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             // 设置空间级别默认值
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
         }
+        if(ObjUtil.isEmpty(space.getSpaceType())){
+            // 设置空间类型默认值
+            space.setSpaceType(SpaceTypeEnum.PRIVATE.getValue());
+        }
         this.fillSpaceBySpaceLevel(space);
         // 1. 参数校验
         this.validSpace(space, true);
@@ -198,11 +210,13 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         synchronized (lock) {
             try {
                 Long newSpaceId = transactionTemplate.execute(status -> {
-                    // 检查用户是否已经有空间
+                    // 每个用户每类空间只能创建一个
                     Space existingSpace = this.lambdaQuery()
+                            .eq(Space::getSpaceType, spaceAddRequest.getSpaceType())
                             .eq(Space::getUserId, userId)
                             .one();
-                    ThrowUtils.ThrowIf(existingSpace != null, ErrorCode.OPERATION_ERROR, "用户已存在空间，不能重复创建");
+                    ThrowUtils.ThrowIf(existingSpace != null, ErrorCode.OPERATION_ERROR,
+                            "用户已经创建该类空间，不能重复创建");
                     // 4. 执行添加操作
                     boolean saveResult = this.save(space);
                     ThrowUtils.ThrowIf(!saveResult, ErrorCode.OPERATION_ERROR, "空间创建失败");
@@ -224,18 +238,26 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     /**
      * 检查用户是否有权限访问指定空间
+     *
      * @param loginUser
      * @param spaceId
      */
     @Override
     public void checkSpaceAuth(User loginUser, Long spaceId) {
-        if(spaceId == null) {
+        if (spaceId == null) {
             // 公共空间
             return;
         }
         Space space = this.getById(spaceId);
         ThrowUtils.ThrowIf(space == null, ErrorCode.NOT_FOUND, "空间不存在");
-        ThrowUtils.ThrowIf(!space.getUserId().equals(loginUser.getId()),ErrorCode.NO_AUTHORIZED, "没有权限访问该空间");
+        ThrowUtils.ThrowIf(!space.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTHORIZED, "没有权限访问该空间");
+    }
+
+    @Override
+    public void checkSpaceAuth(User user, Space space) {
+        if (!space.getUserId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTHORIZED);
+        }
     }
 }
 

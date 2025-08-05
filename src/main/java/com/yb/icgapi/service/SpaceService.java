@@ -20,15 +20,19 @@ import com.yb.icgapi.model.vo.SpaceVO;
 public interface SpaceService extends IService<Space> {
 
     public void validSpace(Space space,boolean add);
+
     public void fillSpaceBySpaceLevel(Space space);
+
     public SpaceVO getSpaceVO(Space space);
-    
+
     QueryWrapper<Space> getQueryWrapper(SpaceQueryRequest spaceQueryRequest);
-    
+
     public Page<SpaceVO> listSpaceVOByPage(SpaceQueryRequest spaceQueryRequest);
 
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser);
 
     void checkSpaceAuth(User user, Long spaceId);
+
+    void checkSpaceAuth(User user, Space space);
 
 }
