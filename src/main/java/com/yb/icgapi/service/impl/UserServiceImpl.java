@@ -1,6 +1,7 @@
 package com.yb.icgapi.service.impl;
 
 
+import cn.dev33.satoken.stp.StpLogic;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -8,6 +9,7 @@ import com.yb.icgapi.constant.DatabaseConstant;
 import com.yb.icgapi.constant.UserConstant;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.manager.auth.StpKit;
 import com.yb.icgapi.model.dto.user.UserQueryRequest;
 import com.yb.icgapi.model.vo.LoginUserVO;
 import com.yb.icgapi.model.entity.User;
@@ -91,6 +93,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.ThrowIf(!user.getUserPassword().equals(encryptedPassword), ErrorCode.PASSWORD_ERROR, "密码错误");
         // 保存登陆态
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+        // 记录用户登录状态到Sa-Token，便于空间鉴权时使用,注意保证与SpringSession中的过期时间一致
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(UserConstant.USER_LOGIN_STATE, user);
         // 返回脱敏视图
         return this.toLoginUserVO(user);
     }

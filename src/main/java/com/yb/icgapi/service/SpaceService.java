@@ -12,6 +12,8 @@ import com.yb.icgapi.model.entity.User;
 import com.yb.icgapi.model.vo.SpaceVO;
 import com.yb.icgapi.model.vo.SpaceVO;
 
+import java.util.List;
+
 /**
 * @author songyibao
 * @description 针对表【space(空间)】的数据库操作Service
@@ -26,6 +28,8 @@ public interface SpaceService extends IService<Space> {
     public SpaceVO getSpaceVO(Space space);
 
     QueryWrapper<Space> getQueryWrapper(SpaceQueryRequest spaceQueryRequest);
+
+    List<SpaceVO> getSpaceVOList(List<Space> spaceList);
 
     public Page<SpaceVO> listSpaceVOByPage(SpaceQueryRequest spaceQueryRequest);
 

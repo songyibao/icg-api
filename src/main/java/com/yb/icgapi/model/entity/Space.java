@@ -30,6 +30,11 @@ public class Space implements Serializable {
     private Integer spaceLevel;
 
     /**
+     * 空间类型  0-个人空间; 1-团队空间
+     */
+    private Integer spaceType;
+
+    /**
      * 空间最大容量（字节）
      */
     private Long maxSize;

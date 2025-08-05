@@ -12,31 +12,26 @@ import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
 import com.yb.icgapi.model.dto.space.SpaceAddRequest;
 import com.yb.icgapi.model.dto.space.SpaceQueryRequest;
-import com.yb.icgapi.model.entity.Picture;
 import com.yb.icgapi.model.entity.Space;
+import com.yb.icgapi.model.entity.SpaceUser;
 import com.yb.icgapi.model.entity.User;
-import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.enums.SpaceLevelEnum;
+import com.yb.icgapi.model.enums.SpaceRoleEnum;
 import com.yb.icgapi.model.enums.SpaceTypeEnum;
-import com.yb.icgapi.model.vo.PictureVO;
 import com.yb.icgapi.model.vo.SpaceVO;
 import com.yb.icgapi.model.vo.UserVO;
 import com.yb.icgapi.service.SpaceService;
 import com.yb.icgapi.mapper.SpaceMapper;
+import com.yb.icgapi.service.SpaceUserService;
 import com.yb.icgapi.service.UserService;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.transaction.Transaction;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
-import javax.xml.crypto.Data;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +45,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceUserService spaceUserService;
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -132,11 +130,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         return queryWrapper;
     }
 
-    public Page<SpaceVO> getSpaceVOPage(Page<Space> spacePage) {
-        List<Space> spaceList = spacePage.getRecords();
-        Page<SpaceVO> spaceVOPage = new Page<>(spacePage.getCurrent(), spacePage.getSize(), spacePage.getTotal());
+    @Override
+    public List<SpaceVO> getSpaceVOList(List<Space> spaceList) {
         if (CollUtil.isEmpty(spaceList)) {
-            return spaceVOPage;
+            return Collections.emptyList();
         }
         // 对象列表 => 封装列表
         List<SpaceVO> spaceVOList = spaceList.stream()
@@ -158,6 +155,18 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             }
             spaceVO.setUser(UserVO.objToVO(user));
         });
+        return spaceVOList;
+    }
+
+    public Page<SpaceVO> getSpaceVOPage(Page<Space> spacePage) {
+        List<Space> spaceList = spacePage.getRecords();
+        Page<SpaceVO> spaceVOPage = new Page<>(spacePage.getCurrent(), spacePage.getSize(), spacePage.getTotal());
+        if (CollUtil.isEmpty(spaceList)) {
+            return spaceVOPage;
+        }
+        // 对象列表 => 封装列表
+        List<SpaceVO> spaceVOList = getSpaceVOList(spaceList);
+        // 设置封装列表到分页对象
         spaceVOPage.setRecords(spaceVOList);
         return spaceVOPage;
     }
@@ -220,6 +229,15 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     // 4. 执行添加操作
                     boolean saveResult = this.save(space);
                     ThrowUtils.ThrowIf(!saveResult, ErrorCode.OPERATION_ERROR, "空间创建失败");
+                    // 5. 如果是团队空间,创建对应的空间用户关联
+                    if(space.getSpaceType() == SpaceTypeEnum.SHARE.getValue()){
+                        SpaceUser spaceUser = new SpaceUser();
+                        spaceUser.setSpaceId(space.getId());
+                        spaceUser.setUserId(userId);
+                        spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
+                        saveResult = spaceUserService.save(spaceUser);
+                        ThrowUtils.ThrowIf(!saveResult, ErrorCode.OPERATION_ERROR, "空间用户关联创建失败");
+                    }
                     return space.getId();
                 });
                 // 在返回前，检查是否为 null

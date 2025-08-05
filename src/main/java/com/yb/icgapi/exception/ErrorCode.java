@@ -12,6 +12,7 @@ public enum ErrorCode {
     PASSWORD_TOO_SHORT(40103,"密码过短"),
     PASSWORD_ERROR(40104,"密码错误"),
     USER_EXIST(40105,"账号已存在"),
+    ALREADY_EXISTS(40200,"已存在"),
     NO_AUTHORIZED(40300,"无权限操作"),
     NOT_FOUND(40400,"资源未找到"),
     OPERATION_ERROR(40500,"操作失败"),

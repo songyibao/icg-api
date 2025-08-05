@@ -143,15 +143,36 @@ CREATE TABLE `ai_person_cluster`
 DROP TABLE IF EXISTS `ai_detected_face`;
 CREATE TABLE `ai_detected_face`
 (
-    `id`              bigint(20)                      NOT NULL AUTO_INCREMENT,
-    `pictureId`       bigint(20)                      NOT NULL COMMENT '关联的图片 id',
-    `clusterId`       bigint(20) DEFAULT NULL COMMENT '【关键】关联到的人物簇 id (ai_person_cluster.id)',
-    `area`     json                            NOT NULL COMMENT '人脸区域坐标 (x, y, w, h, left_eye, right_eye)',
+    `id`         bigint(20)                      NOT NULL AUTO_INCREMENT,
+    `pictureId`  bigint(20)                      NOT NULL COMMENT '关联的图片 id',
+    `clusterId`  bigint(20) DEFAULT NULL COMMENT '【关键】关联到的人物簇 id (ai_person_cluster.id)',
+    `area`       json                            NOT NULL COMMENT '人脸区域坐标 (x, y, w, h, left_eye, right_eye)',
     `confidence` double     DEFAULT NULL COMMENT '人脸检测的置信度',
-    `embedding`       text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '人脸特征向量 (JSON数组格式, 备份用)',
+    `embedding`  text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '人脸特征向量 (JSON数组格式, 备份用)',
     PRIMARY KEY (`id`),
     KEY `idx_pictureId` (`pictureId`),
     KEY `idx_clusterId` (`clusterId`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='【AI】图片中检测到的人脸信息';
+
+
+ALTER TABLE space
+    ADD COLUMN spaceType int default 0 not null comment '空间类型：0-私有 1-团队';
+
+CREATE INDEX idx_spaceType ON space (spaceType);
+
+-- 空间成员表
+create table if not exists space_user
+(
+    id         bigint auto_increment comment 'id' primary key,
+    spaceId    bigint                                 not null comment '空间 id',
+    userId     bigint                                 not null comment '用户 id',
+    spaceRole  varchar(128) default 'viewer'          null comment '空间角色：viewer/editor/admin',
+    createTime datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    -- 索引设计
+    UNIQUE KEY uk_spaceId_userId (spaceId, userId), -- 唯一索引，用户在一个空间中只能有一个角色
+    INDEX idx_spaceId (spaceId),                    -- 提升按空间查询的性能
+    INDEX idx_userId (userId)                       -- 提升按用户查询的性能
+) comment '空间用户关联' collate = utf8mb4_unicode_ci;

@@ -118,8 +118,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 更新图片，不进行空间额度校验
             oldPicture = this.getById(pictureId);
             ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
-            // 校验图片操作权限
-            this.checkPictureAuth(loginUser, oldPicture);
+            // 校验图片操作权限,已经更改为注解权限校验
+//            this.checkPictureAuth(loginUser, oldPicture);
             // 防止更新时空间id被篡改(如果有)
             if(spaceId!=null && !spaceId.equals(oldPicture.getSpaceId())){
                 throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -555,8 +555,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 判断旧图片是否存在
         Picture oldPicture = this.getById(pictureEditRequest.getId());
         ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
-        // 校验权限
-        this.checkPictureAuth(loginUser, oldPicture);
+        // 校验权限,已经更改为注解权限校验
+//        this.checkPictureAuth(loginUser, oldPicture);
 
         // 校验通过，开始编辑
         Picture picture = new Picture();
@@ -585,8 +585,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture oldPicture = this.getById(id);
         // 判断是否存在
         ThrowUtils.ThrowIf(oldPicture == null, ErrorCode.NOT_FOUND, "图片不存在");
-        // 校验权限
-        this.checkPictureAuth(loginUser, oldPicture);
+        // 校验权限,已经更改为注解权限校验
+//        this.checkPictureAuth(loginUser, oldPicture);
         // 操作数据库，使用事务
         Boolean res = transactionTemplate.execute(status -> {
             // 删除图片
@@ -662,8 +662,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.ThrowIf(pictureId == null, ErrorCode.PARAM_BLANK, "图片ID不能为空");
         Picture picture = this.getById(pictureId);
         ThrowUtils.ThrowIf(picture == null, ErrorCode.NOT_FOUND, "图片不存在");
-        // 校验权限
-        this.checkPictureAuth(loginUser, picture);
+        // 校验权限,已经更改为注解权限校验
+//        this.checkPictureAuth(loginUser, picture);
         // 创建请求对象
         CreateOutPaintingTaskRequest request = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
