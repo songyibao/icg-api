@@ -69,7 +69,8 @@ public class StpInterfaceImpl implements StpInterface {
             return new ArrayList<>();
         }
         // 管理员权限，表示权限校验通过
-        List<String> ALL_PERMISSIONS = spaceUserAuthManager.getPermissionsByRole(SpaceRoleEnum.ADMIN.getValue());
+        List<String> ALL_PERMISSIONS =
+                spaceUserAuthManager.getPermissionsByRole(SpaceRoleEnum.OWNER.getValue());
         // 获取上下文对象
         SpaceUserAuthContext authContext = getAuthContextByRequest();
         // 如果所有字段都为空，表示查询公共图库，可以通过
@@ -143,24 +144,25 @@ public class StpInterfaceImpl implements StpInterface {
             throw new BusinessException(ErrorCode.NOT_FOUND, "未找到空间信息");
         }
         // 根据 Space 类型判断权限
-        if (space.getSpaceType() == SpaceTypeEnum.PRIVATE.getValue()) {
-            // 私有空间，仅本人或管理员有权限
-            if (space.getUserId().equals(loginUserId) || userService.isAdmin(loginUser)) {
-                return ALL_PERMISSIONS;
-            } else {
-                return new ArrayList<>();
-            }
-        } else {
-            // 团队空间，查询 SpaceUser 并获取角色和权限
-            spaceUser = spaceUserService.lambdaQuery()
-                    .eq(SpaceUser::getSpaceId, spaceId)
-                    .eq(SpaceUser::getUserId, loginUserId)
-                    .one();
-            if (spaceUser == null) {
-                return new ArrayList<>();
-            }
-            return spaceUserAuthManager.getPermissionsByRole(spaceUser.getSpaceRole());
-        }
+        return spaceUserAuthManager.getPermissionList(space,loginUser);
+//        if (space.getSpaceType() == SpaceTypeEnum.PRIVATE.getValue()) {
+//            // 私有空间，仅本人或管理员有权限
+//            if (space.getUserId().equals(loginUserId) || userService.isAdmin(loginUser)) {
+//                return ALL_PERMISSIONS;
+//            } else {
+//                return new ArrayList<>();
+//            }
+//        } else {
+//            // 团队空间，查询 SpaceUser 并获取角色和权限
+//            spaceUser = spaceUserService.lambdaQuery()
+//                    .eq(SpaceUser::getSpaceId, spaceId)
+//                    .eq(SpaceUser::getUserId, loginUserId)
+//                    .one();
+//            if (spaceUser == null) {
+//                return new ArrayList<>();
+//            }
+//            return spaceUserAuthManager.getPermissionsByRole(spaceUser.getSpaceRole());
+//        }
     }
     private boolean isAllFieldsNull(Object object) {
         if (object == null) {
@@ -199,7 +201,9 @@ public class StpInterfaceImpl implements StpInterface {
             spaceUserAuthContext = JSONUtil.toBean(body, SpaceUserAuthContext.class);
         }else{
             Map<String,String> paramsMap = ServletUtil.getParamMap(request);
-            spaceUserAuthContext = JSONUtil.toBean(paramsMap.toString(), SpaceUserAuthContext.class);
+            String debugStr = paramsMap.toString();
+            spaceUserAuthContext = JSONUtil.toBean(JSONUtil.toJsonStr(paramsMap),
+                    SpaceUserAuthContext.class);
         }
         Long id = spaceUserAuthContext.getId();
         // 根据请求路径判断id字段的含义

@@ -6,6 +6,11 @@
       "description": "管理空间成员，添加或移除成员"
     },
     {
+      "key": "space::manage",
+      "name": "空间管理",
+      "description": "管理空间的基本信息,分析空间等,只有空间创建者和管理员有该权限"
+    },
+    {
       "key": "picture:view",
       "name": "查看图片",
       "description": "查看空间中的图片内容"
@@ -57,6 +62,19 @@
         "picture:delete"
       ],
       "description": "成员管理、查看图片、上传图片、修改图片、删除图片"
+    },
+    {
+      "key": "owner",
+      "name": "所有者",
+      "permissions": [
+        "spaceUser:manage",
+        "space:manage",
+        "picture:view",
+        "picture:upload",
+        "picture:edit",
+        "picture:delete"
+      ],
+      "description": "成员管理、空间管理、查看图片、上传图片、修改图片、删除图片"
     }
   ]
 }

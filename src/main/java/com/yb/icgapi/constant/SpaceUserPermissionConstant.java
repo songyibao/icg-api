@@ -7,6 +7,12 @@ public interface SpaceUserPermissionConstant {
     String SPACE_USER_MANAGE = "spaceUser:manage";
 
     /**
+     * 空间管理权限(空间owner才有)
+     */
+    String SPACE_MANAGE = "space:manage";
+
+
+    /**
      * 图片查看权限
      */
     String PICTURE_VIEW = "picture:view";

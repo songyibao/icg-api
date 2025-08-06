@@ -10,6 +10,7 @@ import com.yb.icgapi.constant.DatabaseConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.manager.sharding.DynamicShardingManager;
 import com.yb.icgapi.model.dto.space.SpaceAddRequest;
 import com.yb.icgapi.model.dto.space.SpaceQueryRequest;
 import com.yb.icgapi.model.entity.Space;
@@ -26,6 +27,7 @@ import com.yb.icgapi.service.SpaceUserService;
 import com.yb.icgapi.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -51,6 +53,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    @Resource
+    @Lazy
+    private DynamicShardingManager dynamicShardingManager;
 
     // 并发map，用于锁
     private Map<Long, Object> lockMap = new ConcurrentHashMap<>();
@@ -234,10 +240,12 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                         SpaceUser spaceUser = new SpaceUser();
                         spaceUser.setSpaceId(space.getId());
                         spaceUser.setUserId(userId);
-                        spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
+                        spaceUser.setSpaceRole(SpaceRoleEnum.OWNER.getValue());
                         saveResult = spaceUserService.save(spaceUser);
                         ThrowUtils.ThrowIf(!saveResult, ErrorCode.OPERATION_ERROR, "空间用户关联创建失败");
                     }
+                    // 6. 创建对应的图片分表(仅旗舰版&&团队空间)
+                    dynamicShardingManager.createPictureSpaceTable(space);
                     return space.getId();
                 });
                 // 在返回前，检查是否为 null

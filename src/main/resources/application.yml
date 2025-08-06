@@ -18,6 +18,32 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  shardingsphere:
+    datasource:
+      names: icg
+      icg:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: ${DB_URL}
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+    rules:
+      sharding:
+        tables:
+          picture:
+            actual-data-nodes: icg.picture # 项目启动时动态获取可用表
+            table-strategy:
+              standard:
+                sharding-column: spaceId
+                sharding-algorithm-name: picture_sharding_algorithm # 自定义分片算法
+        sharding-algorithms:
+          picture_sharding_algorithm:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: com.yb.icgapi.manager.sharding.PictureShardingAlgorithm
+    props:
+      sql-show: true # 显示执行的SQL语句
   redis:
     database: 0
     host: ${REDIS_HOST}
@@ -52,6 +78,7 @@ mybatis-plus:
       logic-delete-field: isDelete
       logic-delete-value: 1
       logic-not-delete-value: 0
+    enable-sql-runner: true
 # 借口文档配置
 knife4j:
   enable: true

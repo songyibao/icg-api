@@ -6,6 +6,7 @@ public interface SpaceUserConstant {
     String VIEWER = "viewer";
     String EDITOR = "editor";
     String ADMIN = "admin";
+    String OWNER = "owner";
     // endregion
 
 }

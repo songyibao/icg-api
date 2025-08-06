@@ -13,7 +13,8 @@ import java.util.List;
 public enum SpaceRoleEnum {
     VIEWER("浏览者", SpaceUserConstant.VIEWER),
     EDITOR("编辑者", SpaceUserConstant.EDITOR),
-    ADMIN("管理员", SpaceUserConstant.ADMIN);
+    ADMIN("管理员", SpaceUserConstant.ADMIN),
+    OWNER("所有者", SpaceUserConstant.OWNER);
 
     private final String name;
     private final String value;

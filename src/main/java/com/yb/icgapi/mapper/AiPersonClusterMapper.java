@@ -3,7 +3,6 @@ package com.yb.icgapi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.yb.icgapi.model.dto.AiPersonCluster.AiPersonClusterDTO;
 import com.yb.icgapi.model.entity.AiPersonCluster;
-import com.yb.icgapi.model.vo.AiPersonClusterVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

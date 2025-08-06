@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,10 +21,12 @@ import com.yb.icgapi.constant.UserConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
 import com.yb.icgapi.manager.auth.StpKit;
 import com.yb.icgapi.manager.auth.annotation.SaSpaceCheckPermission;
 import com.yb.icgapi.model.dto.picture.*;
 import com.yb.icgapi.model.entity.Picture;
+import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.User;
 import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.vo.PictureTagCategory;
@@ -50,8 +53,10 @@ public class PictureController {
     private PictureService pictureService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-    @Autowired
+    @Resource
     private SpaceService spaceService;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
 
     @PostMapping(value = "/upload")
@@ -141,11 +146,19 @@ public class PictureController {
         Picture picture = pictureService.getById(id);
         ThrowUtils.ThrowIf(picture == null, ErrorCode.NOT_FOUND, "图片不存在");
         Long spaceId = picture.getSpaceId();
+        Space space = null;
         if(spaceId != null){
             boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
             ThrowUtils.ThrowIf(!hasPermission, ErrorCode.NO_AUTHORIZED);
+            space = spaceService.getById(spaceId);
+            ThrowUtils.ThrowIf(ObjUtil.isEmpty(space), ErrorCode.NOT_FOUND, "空间不存在");
         }
-        return ResultUtils.success(pictureService.getPictureVO(picture));
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        PictureVO pictureVO = pictureService.getPictureVO(picture);
+        pictureVO.setPermissionList(permissionList);
+        // 设置权限列表
+        return ResultUtils.success(pictureVO);
     }
 
     @PostMapping("/list/page")
