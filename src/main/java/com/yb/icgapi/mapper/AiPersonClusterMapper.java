@@ -20,7 +20,8 @@ public interface AiPersonClusterMapper extends BaseMapper<AiPersonCluster> {
      * @param userId 用户ID
      * @return 包含封面URL的人物簇DTO列表
      */
-    List<AiPersonClusterDTO > listClusterWithCoverUrl(@Param("userId") Long userId);
+    List<AiPersonClusterDTO > listClusterWithCoverUrl(@Param("userId") Long userId,
+                                                      @Param("spaceId") Long spaceId);
 }
 
 

@@ -5,6 +5,9 @@ server:
     session:
       cookie:
         max-age: 2592000 # 30天
+sa-token:
+  timeout: 2592000 # 30天
+
 spring:
   application:
     name: icg-api
@@ -113,3 +116,4 @@ logging:
 # 阿里云百炼AI配置
 aliYunAi:
   apiKey: ${ALIYUN_AI_API_KEY}
+

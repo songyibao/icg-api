@@ -11,6 +11,7 @@ import com.yb.icgapi.constant.UserConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
 import com.yb.icgapi.manager.auth.annotation.SaSpaceCheckPermission;
 import com.yb.icgapi.model.dto.space.*;
 import com.yb.icgapi.model.entity.Space;
@@ -21,6 +22,7 @@ import com.yb.icgapi.model.vo.SpaceVO;
 import com.yb.icgapi.service.SpaceService;
 import com.yb.icgapi.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -37,6 +39,8 @@ public class SpaceController {
     private UserService userService;
     @Resource
     private SpaceService spaceService;
+    @Autowired
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @GetMapping("/list/level")
     public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
@@ -147,7 +151,9 @@ public class SpaceController {
         // 如果传来的id与根据登录用户的id查询到的空间id不一致，则抛出异常
         // 改为注解校验
 //        ThrowUtils.ThrowIf(!id.equals(space.getId()), ErrorCode.PARAMS_ERROR, "空间id参数错误");
-        return ResultUtils.success(spaceService.getSpaceVO(space));
+        SpaceVO spaceVO = spaceService.getSpaceVO(space);
+        spaceVO.setPermissionList(spaceUserAuthManager.getPermissionList(space,loginUser));
+        return ResultUtils.success(spaceVO);
     }
 
     /**

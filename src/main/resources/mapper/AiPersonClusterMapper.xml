@@ -23,14 +23,19 @@
     </sql>
 
     <select id="listClusterWithCoverUrl" resultMap="areaResultMap">
-        SELECT c.*,
-               p.url  AS coverFacePictureUrl,
-               f.area AS coverFaceArea
-        FROM ai_person_cluster c
-                 LEFT JOIN
-             ai_detected_face f ON c.coverFaceId = f.id
-                 LEFT JOIN
-             picture p ON f.pictureId = p.id
-        WHERE c.userId = #{userId}
+        SELECT
+            c.*,
+            p.url AS coverFacePictureUrl,
+            f.area AS coverFaceArea
+        FROM
+            ai_person_cluster c
+                LEFT JOIN
+            ai_detected_face f ON c.coverFaceId = f.id
+                LEFT JOIN
+                picture p
+                ON
+            f.pictureId = p.id and p.spaceId = #{spaceId}
+        WHERE
+            c.userId = #{userId}
     </select>
 </mapper>

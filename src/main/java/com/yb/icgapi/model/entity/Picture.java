@@ -1,9 +1,6 @@
 package com.yb.icgapi.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -91,6 +88,8 @@ public class Picture implements Serializable {
     /**
      * 空间 id
      */
+    // 防止shardingsphere因为更新分片键而报错
+    @TableField(updateStrategy = FieldStrategy.NEVER)
     private Long spaceId;
 
     /**

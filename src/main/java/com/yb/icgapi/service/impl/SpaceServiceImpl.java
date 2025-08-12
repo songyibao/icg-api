@@ -10,6 +10,7 @@ import com.yb.icgapi.constant.DatabaseConstant;
 import com.yb.icgapi.exception.BusinessException;
 import com.yb.icgapi.exception.ErrorCode;
 import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
 import com.yb.icgapi.manager.sharding.DynamicShardingManager;
 import com.yb.icgapi.model.dto.space.SpaceAddRequest;
 import com.yb.icgapi.model.dto.space.SpaceQueryRequest;
@@ -27,6 +28,7 @@ import com.yb.icgapi.service.SpaceUserService;
 import com.yb.icgapi.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -60,6 +62,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     // 并发map，用于锁
     private Map<Long, Object> lockMap = new ConcurrentHashMap<>();
+    @Autowired
+    private SpaceUserAuthManager spaceUserAuthManager;
 
 
     @Override

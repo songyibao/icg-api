@@ -9,6 +9,7 @@ import com.yb.icgapi.mapper.AiPersonClusterMapper;
 import com.yb.icgapi.model.dto.AiPersonCluster.AiPersonClusterDTO;
 import com.yb.icgapi.model.dto.ai.BatchReprocessMessage;
 import com.yb.icgapi.model.entity.*;
+import com.yb.icgapi.model.enums.SpaceTypeEnum;
 import com.yb.icgapi.model.vo.AiDetectedFaceVO;
 import com.yb.icgapi.model.vo.AiPersonClusterVO;
 import com.yb.icgapi.service.*;
@@ -45,8 +46,15 @@ public class AiPersonClusterServiceImpl extends ServiceImpl<AiPersonClusterMappe
         // 这里可以添加获取当前用户私有空间的所有人物簇信息的逻辑
         ThrowUtils.ThrowIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         Long userId = loginUser.getId();
+        Long spaceId = spaceService.listObjs(
+                new LambdaQueryWrapper<Space>()
+                        .select(Space::getId)
+                        .eq(Space::getUserId,userId)
+                        .eq(Space::getSpaceType, SpaceTypeEnum.PRIVATE.getValue()),
+                obj -> (Long) obj
+        ).get(0);
         List<AiPersonClusterDTO> clusterDTOs =
-                aiPersonClusterMapper.listClusterWithCoverUrl(userId);
+                aiPersonClusterMapper.listClusterWithCoverUrl(userId,spaceId);
         // 2. 将DTO列表转换为最终的VO列表返回给前端
         // 这一步逻辑非常清晰，就是简单的对象属性复制
         // 直接转换即可，objToVo会处理好一切

@@ -14,6 +14,7 @@ import com.yb.icgapi.model.dto.spaceuser.SpaceUserEditRequest;
 import com.yb.icgapi.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.yb.icgapi.model.entity.SpaceUser;
 import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.model.enums.SpaceRoleEnum;
 import com.yb.icgapi.model.vo.SpaceUserVO;
 import com.yb.icgapi.service.SpaceUserService;
 import com.yb.icgapi.service.UserService;
@@ -111,17 +112,24 @@ public class SpaceUserController {
         if (spaceUserEditRequest == null || spaceUserEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 将实体类和 DTO 进行转换
-        SpaceUser spaceUser = new SpaceUser();
-        BeanUtils.copyProperties(spaceUserEditRequest, spaceUser);
-        // 数据校验
-        spaceUserService.validSpaceUser(spaceUser, false);
+        if(spaceUserEditRequest.getSpaceRole().equals(SpaceRoleEnum.OWNER.getValue())){
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"暂不支持修改空间创建者");
+        }
         // 判断是否存在
         long id = spaceUserEditRequest.getId();
         SpaceUser oldSpaceUser = spaceUserService.getById(id);
         ThrowUtils.ThrowIf(oldSpaceUser == null, ErrorCode.NOT_FOUND);
+        // 将实体类和 DTO 进行转换
+//        SpaceUser spaceUser = new SpaceUser();
+//        BeanUtils.copyProperties(spaceUserEditRequest, spaceUser);
+        // 数据校验
+        ThrowUtils.ThrowIf(oldSpaceUser.getSpaceRole().equals(SpaceRoleEnum.OWNER.getValue()),
+                ErrorCode.OPERATION_ERROR,"暂时不支持修改空间创建者");
+        // 只允许修改非创建者角色
+        oldSpaceUser.setSpaceRole(spaceUserEditRequest.getSpaceRole());
+        spaceUserService.validSpaceUser(oldSpaceUser, false);
         // 操作数据库
-        boolean result = spaceUserService.updateById(spaceUser);
+        boolean result = spaceUserService.updateById(oldSpaceUser);
         ThrowUtils.ThrowIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }

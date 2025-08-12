@@ -65,7 +65,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
         // 校验空间角色
         String spaceRole = spaceUser.getSpaceRole();
         ThrowUtils.ThrowIf(spaceRole == null || SpaceRoleEnum.getEnumByValue(spaceRole) == null,
-                ErrorCode.PARAMS_ERROR, "空间角色存在");
+                ErrorCode.PARAMS_ERROR, "空间角色不存在");
     }
 
     @Override
@@ -168,7 +168,9 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
         // 创建新的空间用户关联
         SpaceUser newSpaceUser = new SpaceUser();
         BeanUtils.copyProperties(spaceUserAddRequest, newSpaceUser);
-
+        if(ObjUtil.isEmpty(newSpaceUser.getSpaceRole())){
+            newSpaceUser.setSpaceRole(SpaceRoleEnum.VIEWER.getValue());
+        }
         validSpaceUser(newSpaceUser, true);
 
         boolean isSaved = this.save(newSpaceUser);
