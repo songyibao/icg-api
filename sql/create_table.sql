@@ -34,11 +34,11 @@ create table if not exists picture
     editTime     datetime default CURRENT_TIMESTAMP not null comment '编辑时间',
     updateTime   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete     tinyint  default 0                 not null comment '是否删除',
-    INDEX idx_name (name),                 -- 提升基于图片名称的查询性能
-    INDEX idx_introduction (introduction), -- 用于模糊搜索图片简介
-    INDEX idx_category (category),         -- 提升基于分类的查询性能
-    INDEX idx_tags (tags),                 -- 提升基于标签的查询性能
-    INDEX idx_userId (userId)              -- 提升基于用户 ID 的查询性能
+    INDEX idx_name (name) comment '用于模糊搜索图片名称',
+    INDEX idx_introduction (introduction) comment '用于模糊搜索图片简介',
+    INDEX idx_category (category) comment '提升基于分类的查询性能',
+    INDEX idx_tags (tags) comment '提升基于标签的查询性能',
+    INDEX idx_userId (userId) comment '提升基于用户 ID 的查询性能'
 ) comment '图片' collate = utf8mb4_unicode_ci;
 
 ALTER TABLE picture
@@ -49,7 +49,7 @@ ALTER TABLE picture
     ADD COLUMN reviewTime    DATETIME      NULL COMMENT '审核时间';
 
 -- 创建基于 reviewStatus 列的索引
-CREATE INDEX idx_reviewStatus ON picture (reviewStatus);
+CREATE INDEX idx_reviewStatus ON picture (reviewStatus) comment '提升基于审核状态的查询性能';
 
 ALTER TABLE picture
     -- 添加缩略图地址列
@@ -72,9 +72,9 @@ create table if not exists space
     updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete   tinyint  default 0                 not null comment '是否删除',
     -- 索引设计
-    INDEX idx_userId (userId),        -- 提升基于用户 ID 的查询性能
-    INDEX idx_spaceName (spaceName),  -- 提升基于空间名称的查询性能
-    INDEX idx_spaceLevel (spaceLevel) -- 提升基于空间等级的查询性能
+    INDEX idx_userId (userId) comment '提升基于用户 ID 的查询性能',
+    INDEX idx_spaceName (spaceName) comment '提升基于空间名称的查询性能',
+    INDEX idx_spaceLevel (spaceLevel) comment '提升基于空间等级的查询性能'
 
 ) comment '空间' collate = utf8mb4_unicode_ci;
 
@@ -82,7 +82,7 @@ ALTER TABLE picture
     add column spaceId bigint null comment '空间 id(为空表示图片属于公共空间)';
 
 -- 创建索引以提升基于 spaceId 的查询性能
-CREATE INDEX idx_spaceId ON picture (spaceId);
+CREATE INDEX idx_spaceId ON picture (spaceId) comment '提升基于空间 ID 的查询性能';
 
 
 
@@ -172,7 +172,7 @@ create table if not exists space_user
     createTime datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     -- 索引设计
-    UNIQUE KEY uk_spaceId_userId (spaceId, userId), -- 唯一索引，用户在一个空间中只能有一个角色
-    INDEX idx_spaceId (spaceId),                    -- 提升按空间查询的性能
-    INDEX idx_userId (userId)                       -- 提升按用户查询的性能
+    UNIQUE KEY uk_spaceId_userId (spaceId, userId) comment '唯一索引，用户在一个空间中只能有一个角色',
+    INDEX idx_spaceId (spaceId) comment '提升按空间查询的性能',
+    INDEX idx_userId (userId) comment '提升按用户查询的性能'
 ) comment '空间用户关联' collate = utf8mb4_unicode_ci;
