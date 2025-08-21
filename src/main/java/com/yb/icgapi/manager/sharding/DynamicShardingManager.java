@@ -1,8 +1,8 @@
 package com.yb.icgapi.manager.sharding;
 
 import com.baomidou.mybatisplus.extension.toolkit.SqlRunner;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
 import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.enums.SpaceLevelEnum;
 import com.yb.icgapi.model.enums.SpaceTypeEnum;

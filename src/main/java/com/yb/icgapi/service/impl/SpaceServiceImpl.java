@@ -6,26 +6,26 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.yb.icgapi.constant.DatabaseConstant;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
+import com.yb.icgapi.icpic.infrastructure.constant.DatabaseConstant;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
 import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
 import com.yb.icgapi.manager.sharding.DynamicShardingManager;
 import com.yb.icgapi.model.dto.space.SpaceAddRequest;
 import com.yb.icgapi.model.dto.space.SpaceQueryRequest;
 import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.SpaceUser;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.enums.SpaceLevelEnum;
 import com.yb.icgapi.model.enums.SpaceRoleEnum;
 import com.yb.icgapi.model.enums.SpaceTypeEnum;
 import com.yb.icgapi.model.vo.SpaceVO;
-import com.yb.icgapi.model.vo.UserVO;
+import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
 import com.yb.icgapi.service.SpaceService;
-import com.yb.icgapi.mapper.SpaceMapper;
+import com.yb.icgapi.icpic.infrastructure.mapper.SpaceMapper;
 import com.yb.icgapi.service.SpaceUserService;
-import com.yb.icgapi.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +48,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         implements SpaceService {
 
     @Resource
-    private UserService userService;
+    private UserApplicationService userApplicationService;
 
     @Resource
     private SpaceUserService spaceUserService;
@@ -62,8 +62,6 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     // 并发map，用于锁
     private Map<Long, Object> lockMap = new ConcurrentHashMap<>();
-    @Autowired
-    private SpaceUserAuthManager spaceUserAuthManager;
 
 
     @Override
@@ -105,7 +103,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // 填充user字段
         Long userId = space.getUserId();
         if (userId != null) {
-            spaceVO.setUser(userService.getUserVOById(userId));
+            spaceVO.setUser(userApplicationService.getUserVOById(userId));
         }
         return spaceVO;
     }
@@ -155,7 +153,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 .map(Space::getUserId)
                 .filter(ObjUtil::isNotEmpty)
                 .collect(Collectors.toSet());
-        Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream().collect(Collectors.groupingBy(User::getId));
+        Map<Long, List<User>> userIdUserListMap = userApplicationService.listByIds(userIdSet).stream().collect(Collectors.groupingBy(User::getId));
         // 填充用户信息
         spaceVOList.forEach(spaceVO -> {
             Long userId = spaceVO.getUserId();
@@ -163,7 +161,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             if (userIdUserListMap.containsKey(userId)) {
                 user = userIdUserListMap.get(userId).get(0);
             }
-            spaceVO.setUser(UserVO.objToVO(user));
+            spaceVO.setUser(User.toVO(user));
         });
         return spaceVOList;
     }
@@ -216,7 +214,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // 1. 参数校验
         this.validSpace(space, true);
         // 2. 权限校验
-        if (space.getSpaceLevel() != SpaceLevelEnum.COMMON.getValue() && !userService.isAdmin(loginUser)) {
+        if (space.getSpaceLevel() != SpaceLevelEnum.COMMON.getValue() && !loginUser.isAdmin()) {
             throw new BusinessException(ErrorCode.NO_AUTHORIZED, "非管理员用户不能创建非普通空间");
         }
         space.setUserId(userId);

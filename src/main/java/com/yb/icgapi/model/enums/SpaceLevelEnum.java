@@ -1,6 +1,4 @@
 package com.yb.icgapi.model.enums;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter

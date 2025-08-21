@@ -3,9 +3,13 @@ package com.yb.icgapi.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
-import com.yb.icgapi.mapper.AiPersonClusterMapper;
+import com.yb.icgapi.icpic.application.service.PictureApplicationService;
+import com.yb.icgapi.icpic.domain.picture.entity.Picture;
+import com.yb.icgapi.icpic.domain.picture.service.PictureDomainService;
+import com.yb.icgapi.icpic.domain.user.entity.User;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
+import com.yb.icgapi.icpic.infrastructure.mapper.AiPersonClusterMapper;
 import com.yb.icgapi.model.dto.AiPersonCluster.AiPersonClusterDTO;
 import com.yb.icgapi.model.dto.ai.BatchReprocessMessage;
 import com.yb.icgapi.model.entity.*;
@@ -22,24 +26,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
-* @author songyibao
-* @description 针对表【ai_person_cluster(【AI】人物簇 (人脸聚类结果))】的数据库操作Service实现
-* @createDate 2025-07-25 09:04:51
-*/
+ * @author songyibao
+ * @description 针对表【ai_person_cluster(【AI】人物簇 (人脸聚类结果))】的数据库操作Service实现
+ * @createDate 2025-07-25 09:04:51
+ */
 @Service
 public class AiPersonClusterServiceImpl extends ServiceImpl<AiPersonClusterMapper, AiPersonCluster>
-    implements AiPersonClusterService{
+        implements AiPersonClusterService {
 
     @Resource
     private AiDetectedFaceService aiDetectedFaceService;
     @Resource
-    private PictureService pictureService;
+    private PictureDomainService pictureDomainService;
     @Resource
     private AiPersonClusterMapper aiPersonClusterMapper;
     @Resource
     private AIMessageService aiMessageService;
-    @Autowired
+    @Resource
     private SpaceService spaceService;
+    @Autowired
+    private PictureApplicationService pictureApplicationService;
 
     @Override
     public List<AiPersonClusterVO> getPrivatePersonCluster(User loginUser) {
@@ -49,12 +55,12 @@ public class AiPersonClusterServiceImpl extends ServiceImpl<AiPersonClusterMappe
         Long spaceId = spaceService.listObjs(
                 new LambdaQueryWrapper<Space>()
                         .select(Space::getId)
-                        .eq(Space::getUserId,userId)
+                        .eq(Space::getUserId, userId)
                         .eq(Space::getSpaceType, SpaceTypeEnum.PRIVATE.getValue()),
                 obj -> (Long) obj
         ).get(0);
         List<AiPersonClusterDTO> clusterDTOs =
-                aiPersonClusterMapper.listClusterWithCoverUrl(userId,spaceId);
+                aiPersonClusterMapper.listClusterWithCoverUrl(userId, spaceId);
         // 2. 将DTO列表转换为最终的VO列表返回给前端
         // 这一步逻辑非常清晰，就是简单的对象属性复制
         // 直接转换即可，objToVo会处理好一切
@@ -82,15 +88,12 @@ public class AiPersonClusterServiceImpl extends ServiceImpl<AiPersonClusterMappe
                 .map(AiDetectedFace::getPictureId)
                 .filter(Objects::nonNull) // 过滤掉null值
                 .collect(Collectors.toSet());
+        List<Picture> pictureList = pictureApplicationService.getByIds(pictureIds);
         // 查询所有图片的URL
-        Map<Long, String> pictureIdToUrlMap = pictureService.lambdaQuery()
-                .in(Picture::getId, pictureIds)
-                .list()
+        Map<Long, String> pictureIdToUrlMap = pictureList
                 .stream()
                 .collect(Collectors.toMap(Picture::getId, Picture::getUrl));
-        Map<Long, String> pictureIdToThumbnailUrlMap = pictureService.lambdaQuery()
-                .in(Picture::getId, pictureIds)
-                .list()
+        Map<Long, String> pictureIdToThumbnailUrlMap = pictureList
                 .stream()
                 .collect(Collectors.toMap(Picture::getId, Picture::getThumbnailUrl));
         // 将检测到的人脸转换为VO
@@ -117,15 +120,15 @@ public class AiPersonClusterServiceImpl extends ServiceImpl<AiPersonClusterMappe
                 new LambdaQueryWrapper<AiPersonCluster>()
                         .eq(AiPersonCluster::getUserId, loginUser.getId())
                         .select(AiPersonCluster::getId),
-                obj-> (Long) obj
+                obj -> (Long) obj
         );
-        if(CollUtil.isNotEmpty(clusterIds)){
+        if (CollUtil.isNotEmpty(clusterIds)) {
             // 2. 根据人物簇id查询所有检测到的人脸
             List<AiDetectedFace> detectedFaces = aiDetectedFaceService.lambdaQuery()
                     .in(AiDetectedFace::getClusterId, clusterIds)
                     .list();
             // 3. 删除检测到的人脸
-            if(CollUtil.isNotEmpty(detectedFaces)){
+            if (CollUtil.isNotEmpty(detectedFaces)) {
                 aiDetectedFaceService.remove(
                         new LambdaQueryWrapper<AiDetectedFace>()
                                 .in(AiDetectedFace::getClusterId, clusterIds)

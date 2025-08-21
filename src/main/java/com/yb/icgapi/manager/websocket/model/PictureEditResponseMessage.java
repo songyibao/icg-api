@@ -1,5 +1,5 @@
 package com.yb.icgapi.manager.websocket.model;
-import com.yb.icgapi.model.vo.UserVO;
+import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

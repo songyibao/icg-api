@@ -2,9 +2,6 @@ package com.yb.icgapi.service;
 
 import com.yb.icgapi.model.entity.AiDetectedFace;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.yb.icgapi.model.entity.User;
-
-import java.util.List;
 
 /**
 * @author songyibao

@@ -6,10 +6,10 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.Method;
-import com.yb.icgapi.constant.PictureConstant;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.icpic.domain.picture.constant.PictureConstant;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
 import com.yb.icgapi.manager.upload.PictureUploadTemplate;
 import org.springframework.stereotype.Service;
 

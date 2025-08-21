@@ -2,8 +2,6 @@ package com.yb.icgapi.model.enums;
 
 import cn.hutool.core.util.ObjUtil;
 import com.yb.icgapi.constant.SpaceUserConstant;
-import com.yb.icgapi.constant.UserConstant;
-import com.yb.icgapi.model.entity.SpaceUser;
 import lombok.Getter;
 
 import java.util.ArrayList;

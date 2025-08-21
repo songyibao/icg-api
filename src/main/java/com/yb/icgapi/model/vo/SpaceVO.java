@@ -1,5 +1,6 @@
 package com.yb.icgapi.model.vo;
 
+import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
 import com.yb.icgapi.model.entity.Space;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;

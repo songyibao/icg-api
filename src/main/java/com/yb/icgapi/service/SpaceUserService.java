@@ -1,16 +1,11 @@
 package com.yb.icgapi.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.yb.icgapi.model.dto.space.SpaceAddRequest;
 import com.yb.icgapi.model.dto.spaceuser.SpaceUserAddRequest;
 import com.yb.icgapi.model.dto.spaceuser.SpaceUserQueryRequest;
-import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.SpaceUser;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.yb.icgapi.model.entity.User;
 import com.yb.icgapi.model.vo.SpaceUserVO;
-import com.yb.icgapi.model.vo.SpaceVO;
 
 import java.util.List;
 

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.yb.icgapi.mapper.SpaceUserMapper">
+<mapper namespace="com.yb.icgapi.icpic.infrastructure.mapper.SpaceUserMapper">
 
     <resultMap id="BaseResultMap" type="com.yb.icgapi.model.entity.SpaceUser">
             <id property="id" column="id" />

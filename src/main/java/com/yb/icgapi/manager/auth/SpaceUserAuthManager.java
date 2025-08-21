@@ -9,11 +9,11 @@ import com.yb.icgapi.manager.auth.model.SpaceUserAuthConfig;
 import com.yb.icgapi.manager.auth.model.SpaceUserRole;
 import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.SpaceUser;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.enums.SpaceRoleEnum;
 import com.yb.icgapi.model.enums.SpaceTypeEnum;
 import com.yb.icgapi.service.SpaceUserService;
-import com.yb.icgapi.service.UserService;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -33,7 +33,7 @@ public class SpaceUserAuthManager {
     }
 
     @Resource
-    private UserService userService;
+    private UserApplicationService userApplicationService;
     @Resource
     private SpaceUserService spaceUserService;
 
@@ -69,7 +69,7 @@ public class SpaceUserAuthManager {
         List<String> ADMIN_PERMISSIONS = getPermissionsByRole(SpaceRoleEnum.ADMIN.getValue());
         // 如果是公共图库
         if(space == null){
-            if(userService.isAdmin(loginUser)){
+            if(loginUser.isAdmin()){
                 return ADMIN_PERMISSIONS;
             }
             return Collections.singletonList(SpaceUserPermissionConstant.PICTURE_VIEW);
@@ -83,7 +83,7 @@ public class SpaceUserAuthManager {
                 if(space.getUserId().equals(loginUser.getId())){
                     // owner权限
                     return OWNER_PERMISSIONS;
-                } else if( userService.isAdmin(loginUser)) {
+                } else if(loginUser.isAdmin()) {
                     // 管理员权限，这里设定系统管理员可以管理别人的私有空间
 //                    return ADMIN_PERMISSIONS;
                     return OWNER_PERMISSIONS;

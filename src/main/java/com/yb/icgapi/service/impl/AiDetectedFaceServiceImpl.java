@@ -1,17 +1,10 @@
 package com.yb.icgapi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
 import com.yb.icgapi.model.entity.AiDetectedFace;
-import com.yb.icgapi.model.entity.Picture;
 import com.yb.icgapi.service.AiDetectedFaceService;
-import com.yb.icgapi.mapper.AiDetectedFaceMapper;
-import com.yb.icgapi.service.PictureService;
+import com.yb.icgapi.icpic.infrastructure.mapper.AiDetectedFaceMapper;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 
 /**
 * @author songyibao

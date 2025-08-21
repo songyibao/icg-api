@@ -1,7 +1,6 @@
 package com.yb.icgapi.manager.upload;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -10,17 +9,16 @@ import cn.hutool.core.util.RandomUtil;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
-import com.yb.icgapi.config.CosClientConfig;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.manager.CosManager;
+import com.yb.icgapi.icpic.infrastructure.config.CosClientConfig;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.api.CosManager;
 import com.yb.icgapi.model.dto.file.UploadPictureResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 
 import javax.annotation.Resource;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

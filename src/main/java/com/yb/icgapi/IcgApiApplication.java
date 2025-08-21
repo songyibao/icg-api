@@ -7,7 +7,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
-@MapperScan("com.yb.icgapi.mapper")
+@MapperScan("com.yb.icgapi.icpic.infrastructure.mapper")
 @EnableAspectJAutoProxy(exposeProxy = true)
 @EnableAsync
 public class IcgApiApplication {

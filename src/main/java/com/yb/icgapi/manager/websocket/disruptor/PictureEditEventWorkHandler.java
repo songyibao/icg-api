@@ -4,8 +4,8 @@ import cn.hutool.json.JSONUtil;
 import com.yb.icgapi.manager.websocket.model.PictureEditMessageTypeEnum;
 import com.yb.icgapi.manager.websocket.model.PictureEditRequestMessage;
 import com.yb.icgapi.manager.websocket.model.PictureEditResponseMessage;
-import com.yb.icgapi.model.entity.User;
-import com.yb.icgapi.model.vo.UserVO;
+import com.yb.icgapi.icpic.domain.user.entity.User;
+import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -59,7 +59,7 @@ public class PictureEditEventWorkHandler implements WorkHandler<PictureEditEvent
                 PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
                 pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.ERROR.getValue());
                 pictureEditResponseMessage.setMessage("未知的消息类型: " + type);
-                pictureEditResponseMessage.setUser(UserVO.objToVO(user));
+                pictureEditResponseMessage.setUser(User.toVO(user));
                 // 向该用户发送错误消息
                 session.sendMessage(new TextMessage(JSONUtil.toJsonStr(pictureEditResponseMessage)));
         }

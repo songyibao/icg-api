@@ -3,14 +3,14 @@ package com.yb.icgapi.manager.websocket;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.yb.icgapi.constant.SpaceUserPermissionConstant;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
 import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
-import com.yb.icgapi.model.entity.Picture;
+import com.yb.icgapi.icpic.domain.picture.entity.Picture;
 import com.yb.icgapi.model.entity.Space;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.enums.SpaceTypeEnum;
-import com.yb.icgapi.service.PictureService;
+import com.yb.icgapi.icpic.domain.picture.service.PictureDomainService;
 import com.yb.icgapi.service.SpaceService;
-import com.yb.icgapi.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -31,10 +31,10 @@ import java.util.Map;
 @Slf4j
 public class WsHandshakeInterceptor implements HandshakeInterceptor {
     @Resource
-    UserService userService;
+    UserApplicationService userApplicationService;
 
     @Resource
-    PictureService pictureService;
+    PictureDomainService pictureDomainService;
 
     @Resource
     SpaceService spaceService;
@@ -52,13 +52,13 @@ public class WsHandshakeInterceptor implements HandshakeInterceptor {
                 return false;
             }
             // 获取当前用户
-            User loginUser = userService.getLoginUser(servletRequest);
+            User loginUser = userApplicationService.getLoginUser(servletRequest);
             if(ObjUtil.isEmpty(loginUser)){
                 log.error("用户未登录，拒绝握手");
                 return false;
             }
 
-            Picture picture = pictureService.getById(pictureId);
+            Picture picture = pictureDomainService.getById(Long.valueOf(pictureId));
             if(ObjUtil.isEmpty(picture)){
                 log.error("图片不存在，拒绝握手");
                 return false;

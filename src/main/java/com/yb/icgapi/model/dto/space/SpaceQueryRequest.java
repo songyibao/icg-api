@@ -1,13 +1,9 @@
 package com.yb.icgapi.model.dto.space;
 
-import com.yb.icgapi.common.PageRequest;
-import com.yb.icgapi.model.entity.Space;
-import com.yb.icgapi.model.vo.UserVO;
+import com.yb.icgapi.icpic.infrastructure.common.PageRequest;
 import lombok.Data;
-import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
-import java.util.Date;
 
 @Data
 public class SpaceQueryRequest extends PageRequest implements Serializable {

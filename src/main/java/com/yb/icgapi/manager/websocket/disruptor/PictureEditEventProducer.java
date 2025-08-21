@@ -3,7 +3,7 @@ package com.yb.icgapi.manager.websocket.disruptor;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.yb.icgapi.manager.websocket.model.PictureEditRequestMessage;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;

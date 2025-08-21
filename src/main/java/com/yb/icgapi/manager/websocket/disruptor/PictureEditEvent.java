@@ -1,7 +1,7 @@
 package com.yb.icgapi.manager.websocket.disruptor;
 
 import com.yb.icgapi.manager.websocket.model.PictureEditRequestMessage;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import lombok.Data;
 import org.springframework.web.socket.WebSocketSession;
 

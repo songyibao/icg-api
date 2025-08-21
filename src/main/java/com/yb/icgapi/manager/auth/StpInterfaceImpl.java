@@ -7,33 +7,30 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import cn.hutool.http.ContentType;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.yb.icgapi.constant.SpaceUserPermissionConstant;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.manager.auth.model.SpaceUserAuthConfig;
-import com.yb.icgapi.model.entity.Picture;
+import com.yb.icgapi.icpic.application.service.PictureApplicationService;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.domain.picture.entity.Picture;
 import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.SpaceUser;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.enums.SpaceRoleEnum;
-import com.yb.icgapi.model.enums.SpaceTypeEnum;
-import com.yb.icgapi.service.PictureService;
+import com.yb.icgapi.icpic.domain.picture.service.PictureDomainService;
 import com.yb.icgapi.service.SpaceService;
 import com.yb.icgapi.service.SpaceUserService;
-import com.yb.icgapi.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
-import static com.yb.icgapi.constant.UserConstant.USER_LOGIN_STATE;
+import static com.yb.icgapi.icpic.domain.user.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 自定义权限加载接口实现类
@@ -49,7 +46,7 @@ public class StpInterfaceImpl implements StpInterface {
     SpaceService spaceService;
 
     @Resource
-    UserService userService;
+    PictureApplicationService pictureApplicationService;
 
     @Resource
     SpaceUserAuthManager spaceUserAuthManager;
@@ -58,7 +55,7 @@ public class StpInterfaceImpl implements StpInterface {
     SpaceUserService spaceUserService;
 
     @Resource
-    PictureService pictureService;
+    PictureDomainService pictureDomainService;
     /**
      * 返回一个账号所拥有的权限码集合 
      */
@@ -118,17 +115,14 @@ public class StpInterfaceImpl implements StpInterface {
                 return ALL_PERMISSIONS;
             }
             // 有图片id
-            Picture picture = pictureService.lambdaQuery()
-                    .eq(Picture::getId, pictureId)
-                    .select(Picture::getId, Picture::getSpaceId, Picture::getUserId)
-                    .one();
+            Picture picture = pictureApplicationService.getPictureById(pictureId);
             if (picture == null) {
                 throw new BusinessException(ErrorCode.NOT_FOUND, "未找到图片信息");
             }
             spaceId = picture.getSpaceId();
             // 该图片属于公共图库
             if (spaceId == null) {
-                if (picture.getUserId().equals(loginUserId) || userService.isAdmin(loginUser)) {
+                if (picture.getUserId().equals(loginUserId) || loginUser.isAdmin()) {
                     // 仅本人或管理员可操作
                     return ALL_PERMISSIONS;
                 } else {
@@ -147,7 +141,7 @@ public class StpInterfaceImpl implements StpInterface {
         return spaceUserAuthManager.getPermissionList(space,loginUser);
 //        if (space.getSpaceType() == SpaceTypeEnum.PRIVATE.getValue()) {
 //            // 私有空间，仅本人或管理员有权限
-//            if (space.getUserId().equals(loginUserId) || userService.isAdmin(loginUser)) {
+//            if (space.getUserId().equals(loginUserId) || userApplicationService.isAdmin(loginUser)) {
 //                return ALL_PERMISSIONS;
 //            } else {
 //                return new ArrayList<>();

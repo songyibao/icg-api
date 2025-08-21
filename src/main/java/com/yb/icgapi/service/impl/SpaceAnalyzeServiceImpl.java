@@ -5,24 +5,24 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
-import com.yb.icgapi.mapper.SpaceMapper;
+import com.yb.icgapi.icpic.application.service.PictureApplicationService;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
+import com.yb.icgapi.icpic.infrastructure.mapper.SpaceMapper;
 import com.yb.icgapi.model.dto.analyze.*;
-import com.yb.icgapi.model.entity.Picture;
+import com.yb.icgapi.icpic.domain.picture.entity.Picture;
 import com.yb.icgapi.model.entity.Space;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.vo.analyze.*;
-import com.yb.icgapi.service.PictureService;
+import com.yb.icgapi.icpic.domain.picture.service.PictureDomainService;
 import com.yb.icgapi.service.SpaceAnalyzeService;
 import com.yb.icgapi.service.SpaceService;
-import com.yb.icgapi.service.UserService;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +31,13 @@ import java.util.stream.Collectors;
 @Service
 public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> implements SpaceAnalyzeService {
     @Resource
-    UserService userService;
+    PictureApplicationService pictureApplicationService;
+    @Resource
+    UserApplicationService userApplicationService;
     @Resource
     SpaceService spaceService;
     @Resource
-    PictureService pictureService;
+    PictureDomainService pictureDomainService;
 
     // 为提高代码可读性和可维护性，将单位定义为常量
     private static final long KB = 1024;
@@ -44,7 +46,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
     private void checkSpaceAnalyzeAuth(SpaceAnalyzeRequest spaceAnalyzeRequest, User loginUser) {
         // 只有管理员可以分析全部空间或者公共空间
         if (spaceAnalyzeRequest.isQueryAll() || spaceAnalyzeRequest.isQueryPublic()) {
-            ThrowUtils.ThrowIf(!userService.isAdmin(loginUser), ErrorCode.NO_AUTHORIZED);
+            ThrowUtils.ThrowIf(!loginUser.isAdmin(), ErrorCode.NO_AUTHORIZED);
             return;
         }
         // 私有空间权限校验
@@ -76,11 +78,9 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
         checkSpaceAnalyzeAuth(spaceUsageAnalyzeRequest, loginUser);
         if (spaceUsageAnalyzeRequest.isQueryAll() || spaceUsageAnalyzeRequest.isQueryPublic()) {
             // 分析公共空间或者全部空间
-            List<Long> pictureSizeList = pictureService.listObjs(
-                    new LambdaQueryWrapper<Picture>()
-                            .isNull(spaceUsageAnalyzeRequest.isQueryPublic(), Picture::getSpaceId)
-                            .select(Picture::getPicSize)
-                    , obj -> (Long) obj);
+            Boolean isQueryPublic = spaceUsageAnalyzeRequest.isQueryPublic();
+            List<Long> pictureSizeList =
+                    pictureApplicationService.getPictureSizeList(isQueryPublic,null);
             // 计算总大小
             long totalSize = pictureSizeList.stream().mapToLong(Long::longValue).sum();
             // 计算总数量
@@ -100,11 +100,8 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
             Space space = spaceService.getById(spaceId);
             ThrowUtils.ThrowIf(space == null, ErrorCode.NOT_FOUND, "空间不存在");
             // 获取该空间下的所有图片大小
-            List<Long> pictureSizeList = pictureService.listObjs(
-                    new LambdaQueryWrapper<Picture>()
-                            .eq(Picture::getSpaceId, spaceId)
-                            .select(Picture::getPicSize)
-                    , obj -> (Long) obj);
+            List<Long> pictureSizeList = pictureApplicationService.getPictureSizeList(false,
+                    spaceId);
             // 计算总大小
             long totalSize = pictureSizeList.stream().mapToLong(Long::longValue).sum();
             // 计算总数量
@@ -132,7 +129,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
                 .groupBy("category");
         // 分组统计每个分类的图片数量和总大小
 
-        List<Map<String, Object>> mapList = pictureService.listMaps(queryWrapper);
+        List<Map<String, Object>> mapList = pictureApplicationService.listMaps(queryWrapper);
         // 如果没有查询到数据，返回空列表
         if (CollectionUtil.isEmpty(mapList)) {
             return Collections.emptyList();
@@ -162,21 +159,10 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
                                                          User loginUser) {
         // 校验权限
         checkSpaceAnalyzeAuth(spaceTagAnalyzeRequest, loginUser);
-        // 创建查询条件
-        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
-        fillAnalyzeQueryWrapper(spaceTagAnalyzeRequest, queryWrapper);
-        // 每张图可能使用多个tag 保存形式为 json string ["tag1", "tag2", ...]
-        queryWrapper.select("tags");
-        queryWrapper.isNotNull("tags");
-        // 查询所有图片的tags
-        List<String> tagsList = pictureService.listObjs(queryWrapper, obj -> (String) obj);
-        // 统计每个tag的数量
-        Map<String, Long> tagCountMap = tagsList.stream()
-                .flatMap(tags -> {
-                    // 把每个图片的tags字符串转换为List
-                    return JSONUtil.toList(tags, String.class).stream();
-                })
-                .collect(Collectors.groupingBy(tag -> tag, Collectors.counting()));
+        boolean isQueryPublic = spaceTagAnalyzeRequest.isQueryPublic();
+        Long spaceId = spaceTagAnalyzeRequest.getSpaceId();
+        Map<String, Long> tagCountMap = pictureApplicationService.getTagCountMap(isQueryPublic,
+                spaceId);
         // 转换为响应对象列表,按标签使用次数降序排序
         return tagCountMap.entrySet().stream()
                 .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
@@ -196,10 +182,12 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
         // 创建查询条件
         QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
         fillAnalyzeQueryWrapper(spacePictureSizeAnalyzeRequest, queryWrapper);
-
+        // 获取所有图片的大小的列表
+        List<Long> pictureSizeList =
+                pictureApplicationService.getPictureSizeList(spacePictureSizeAnalyzeRequest.isQueryPublic(),
+                        spacePictureSizeAnalyzeRequest.getSpaceId());
         // 分组统计每个图片大小范围的数量
-        return pictureService.listObjs(queryWrapper.select("picSize"),
-                        obj -> (Long) obj)
+        return pictureSizeList
                 .stream()
                 .collect(Collectors.groupingBy(size -> {
                     if (size < 100 * KB) {
@@ -259,7 +247,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
         // 校验权限
         checkSpaceAnalyzeAuth(spaceUserAnalyzeRequest, loginUser);
         // 用户不能分析别的用户
-        if (!userService.isAdmin(loginUser) && !loginUser.getId().equals(spaceUserAnalyzeRequest.getUserId())) {
+        if (!loginUser.isAdmin() && !loginUser.getId().equals(spaceUserAnalyzeRequest.getUserId())) {
             throw new BusinessException(ErrorCode.NO_AUTHORIZED, "无权分析其他用户的空间使用情况");
         }
         // 创建查询条件
@@ -283,7 +271,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
         }
         queryWrapper.groupBy("period").orderByAsc("period");
         // 执行查询
-        List<Map<String, Object>> mapList = pictureService.listMaps(queryWrapper);
+        List<Map<String, Object>> mapList = pictureDomainService.listMaps(queryWrapper);
         // 如果没有查询到数据，返回空列表
         if (CollectionUtils.isEmpty(mapList)) {
             return Collections.emptyList();
@@ -304,7 +292,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> imp
     public List<Space> analyzeSpaceUsageRank(SpaceRankAnalyzeRequest spaceRankAnalyzeRequest,
                                              User loginUser) {
         // 校验权限
-        ThrowUtils.ThrowIf(!userService.isAdmin(loginUser), ErrorCode.NO_AUTHORIZED, "只有管理员可以查看空间使用排行");
+        ThrowUtils.ThrowIf(!loginUser.isAdmin(), ErrorCode.NO_AUTHORIZED, "只有管理员可以查看空间使用排行");
         // 创建查询条件
         QueryWrapper<Space> queryWrapper = new QueryWrapper<>();
         // 公共空间不参与排名

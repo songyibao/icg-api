@@ -1,6 +1,6 @@
 package com.yb.icgapi.manager.auth;
 
-import com.yb.icgapi.model.entity.Picture;
+import com.yb.icgapi.icpic.domain.picture.entity.Picture;
 import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.model.entity.SpaceUser;
 import lombok.Data;

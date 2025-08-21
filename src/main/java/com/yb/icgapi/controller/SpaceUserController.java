@@ -1,25 +1,24 @@
 package com.yb.icgapi.controller;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.yb.icgapi.common.BaseResponse;
-import com.yb.icgapi.common.DeleteRequest;
-import com.yb.icgapi.common.ResultUtils;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
+import com.yb.icgapi.icpic.infrastructure.common.BaseResponse;
+import com.yb.icgapi.icpic.infrastructure.common.DeleteRequest;
+import com.yb.icgapi.icpic.infrastructure.common.ResultUtils;
 import com.yb.icgapi.constant.SpaceUserPermissionConstant;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
 import com.yb.icgapi.manager.auth.annotation.SaSpaceCheckPermission;
 import com.yb.icgapi.model.dto.spaceuser.SpaceUserAddRequest;
 import com.yb.icgapi.model.dto.spaceuser.SpaceUserEditRequest;
 import com.yb.icgapi.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.yb.icgapi.model.entity.SpaceUser;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.enums.SpaceRoleEnum;
 import com.yb.icgapi.model.vo.SpaceUserVO;
 import com.yb.icgapi.service.SpaceUserService;
-import com.yb.icgapi.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,7 +37,7 @@ public class SpaceUserController {
     private SpaceUserService spaceUserService;
 
     @Resource
-    private UserService userService;
+    private UserApplicationService userApplicationService;
 
     /**
      * 添加成员到空间
@@ -139,7 +138,7 @@ public class SpaceUserController {
      */
     @PostMapping("/list/my")
     public BaseResponse<List<SpaceUserVO>> listMyTeamSpace(HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userApplicationService.getLoginUser(request);
         SpaceUserQueryRequest spaceUserQueryRequest = new SpaceUserQueryRequest();
         spaceUserQueryRequest.setUserId(loginUser.getId());
         List<SpaceUser> spaceUserList = spaceUserService.list(

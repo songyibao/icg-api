@@ -1,26 +1,25 @@
 package com.yb.icgapi.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.yb.icgapi.annotation.AuthCheck;
-import com.yb.icgapi.common.BaseResponse;
-import com.yb.icgapi.common.BeanCopyUtils;
-import com.yb.icgapi.common.DeleteRequest;
-import com.yb.icgapi.common.ResultUtils;
+import com.yb.icgapi.icpic.infrastructure.annotation.AuthCheck;
+import com.yb.icgapi.icpic.infrastructure.common.BaseResponse;
+import com.yb.icgapi.icpic.infrastructure.common.BeanCopyUtils;
+import com.yb.icgapi.icpic.infrastructure.common.DeleteRequest;
+import com.yb.icgapi.icpic.infrastructure.common.ResultUtils;
 import com.yb.icgapi.constant.SpaceUserPermissionConstant;
-import com.yb.icgapi.constant.UserConstant;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.icpic.domain.user.constant.UserConstant;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
 import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
 import com.yb.icgapi.manager.auth.annotation.SaSpaceCheckPermission;
 import com.yb.icgapi.model.dto.space.*;
 import com.yb.icgapi.model.entity.Space;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.enums.SpaceLevelEnum;
 import com.yb.icgapi.model.enums.SpaceTypeEnum;
 import com.yb.icgapi.model.vo.SpaceVO;
 import com.yb.icgapi.service.SpaceService;
-import com.yb.icgapi.service.UserService;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -36,10 +35,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/space")
 public class SpaceController {
     @Resource
-    private UserService userService;
+    private UserApplicationService userApplicationService;
     @Resource
     private SpaceService spaceService;
-    @Autowired
+    @Resource
     private SpaceUserAuthManager spaceUserAuthManager;
 
     @GetMapping("/list/level")
@@ -68,7 +67,7 @@ public class SpaceController {
     public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest,
                                        HttpServletRequest request) {
         ThrowUtils.ThrowIf(spaceAddRequest == null, ErrorCode.PARAM_BLANK);
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userApplicationService.getLoginUser(request);
         Long id = spaceService.addSpace(spaceAddRequest, loginUser);
         return ResultUtils.success(id);
     }
@@ -88,7 +87,7 @@ public class SpaceController {
 //        Space oldSpace = spaceService.getById(id);
 //        ThrowUtils.ThrowIf(oldSpace == null, ErrorCode.NOT_FOUND, "空间不存在");
         // 判断是否是本人或者管理员
-//        User loginUser = userService.getLoginUser(request);
+//        User loginUser = userApplicationService.getLoginUser(request);
 //        if (!oldSpace.getUserId().equals(loginUser.getId()) && !loginUser.getUserRole().equals(UserConstant.ADMIN_ROLE)) {
 //            throw new BusinessException(ErrorCode.NO_AUTHORIZED);
 //        }
@@ -143,7 +142,7 @@ public class SpaceController {
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.SPACE_MANAGE)
     public BaseResponse<SpaceVO> getSpaceVOById(@RequestParam("id") Long id, HttpServletRequest request) {
         ThrowUtils.ThrowIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userApplicationService.getLoginUser(request);
         Space space = spaceService.lambdaQuery()
                 .eq(Space::getId, id)
                 .one();
@@ -164,7 +163,7 @@ public class SpaceController {
      */
     @GetMapping("/get/vo/unique")
     public BaseResponse<SpaceVO> getSpaceVOByLoginUser(HttpServletRequest request) {
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userApplicationService.getLoginUser(request);
         Space space = spaceService.lambdaQuery()
                 .eq(Space::getUserId, loginUser.getId())
                 .eq(Space::getSpaceType, SpaceTypeEnum.PRIVATE.getValue())
@@ -202,7 +201,7 @@ public class SpaceController {
         space.setEditTime(new Date());
         // 数据校验
         spaceService.validSpace(space, false);
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userApplicationService.getLoginUser(request);
         // 判断旧空间是否存在
         Space oldSpace = spaceService.getById(space.getId());
         ThrowUtils.ThrowIf(oldSpace == null, ErrorCode.NOT_FOUND, "空间不存在");

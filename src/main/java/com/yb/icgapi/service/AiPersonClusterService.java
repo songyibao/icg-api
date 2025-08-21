@@ -2,7 +2,7 @@ package com.yb.icgapi.service;
 
 import com.yb.icgapi.model.entity.AiPersonCluster;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.vo.AiDetectedFaceVO;
 import com.yb.icgapi.model.vo.AiPersonClusterVO;
 import org.springframework.scheduling.annotation.Async;

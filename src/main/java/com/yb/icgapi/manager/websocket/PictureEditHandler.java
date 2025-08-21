@@ -5,14 +5,14 @@ import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.yb.icgapi.icpic.application.service.UserApplicationService;
 import com.yb.icgapi.manager.websocket.disruptor.PictureEditEventProducer;
 import com.yb.icgapi.manager.websocket.model.PictureEditActionEnum;
 import com.yb.icgapi.manager.websocket.model.PictureEditMessageTypeEnum;
 import com.yb.icgapi.manager.websocket.model.PictureEditRequestMessage;
 import com.yb.icgapi.manager.websocket.model.PictureEditResponseMessage;
-import com.yb.icgapi.model.entity.User;
-import com.yb.icgapi.model.vo.UserVO;
-import com.yb.icgapi.service.UserService;
+import com.yb.icgapi.icpic.domain.user.entity.User;
+import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -34,13 +34,13 @@ public class PictureEditHandler extends TextWebSocketHandler {
 
     // 保存所有连接的会话，key: pictureId, value: 用户会话集合
     private final Map<Long, Set<WebSocketSession>> pictureSessions = new ConcurrentHashMap<>();
-    private final UserService userService;
+    private final UserApplicationService userApplicationService;
 
     @Resource
     private PictureEditEventProducer pictureEditEventProducer;
 
-    public PictureEditHandler(UserService userService) {
-        this.userService = userService;
+    public PictureEditHandler(UserApplicationService userApplicationService) {
+        this.userApplicationService = userApplicationService;
     }
 
 
@@ -56,7 +56,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
         PictureEditResponseMessage pictureEditResponseMessage = new PictureEditResponseMessage();
         String message = String.format("用户 %s 加入了协作", user.getUserName());
         pictureEditResponseMessage.setMessage(message);
-        pictureEditResponseMessage.setUser(UserVO.objToVO(user));
+        pictureEditResponseMessage.setUser(User.toVO(user));
         // 广播给所有用户，自己也可以广播
         broadcastToPicture(pictureId, pictureEditResponseMessage);
     }
@@ -86,7 +86,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
             pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.EXIT_EDIT.getValue());
             String message = String.format("用户 %s 退出了图片编辑", user.getUserName());
             pictureEditResponseMessage.setMessage(message);
-            pictureEditResponseMessage.setUser(UserVO.objToVO(user));
+            pictureEditResponseMessage.setUser(User.toVO(user));
             // 广播给所有用户，自己也可以广播
             broadcastToPicture(pictureId, pictureEditResponseMessage);
         }
@@ -103,7 +103,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
             pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.ENTER_EDIT.getValue());
             String message = String.format("用户 %s 进入了图片编辑", user.getUserName());
             pictureEditResponseMessage.setMessage(message);
-            pictureEditResponseMessage.setUser(UserVO.objToVO(user));
+            pictureEditResponseMessage.setUser(User.toVO(user));
             // 广播给所有用户，自己也可以广播
             broadcastToPicture(pictureId, pictureEditResponseMessage);
         }
@@ -126,7 +126,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
         pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.EDIT_ACTION.getValue());
         String message = String.format("用户 %s 执行了编辑操作: %s", user.getUserName(), editAction);
         pictureEditResponseMessage.setMessage(message);
-        pictureEditResponseMessage.setUser(UserVO.objToVO(user));
+        pictureEditResponseMessage.setUser(User.toVO(user));
         pictureEditResponseMessage.setEditAction(editAction);
         // 广播给所有用户，自己不可以广播，防止重复操作
         broadcastToPicture(pictureId, pictureEditResponseMessage, session);
@@ -152,7 +152,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
         pictureEditResponseMessage.setType(PictureEditMessageTypeEnum.INFO.getValue());
         String message = String.format("用户 %s 离开了协作", user.getUserName());
         pictureEditResponseMessage.setMessage(message);
-        pictureEditResponseMessage.setUser(UserVO.objToVO(user));
+        pictureEditResponseMessage.setUser(User.toVO(user));
         // 广播给所有用户，自己也可以广播
         broadcastToPicture(pictureId, pictureEditResponseMessage);
 

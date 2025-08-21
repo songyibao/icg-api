@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.yb.icgapi.model.entity.Space;
+import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
 import com.yb.icgapi.model.entity.SpaceUser;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;

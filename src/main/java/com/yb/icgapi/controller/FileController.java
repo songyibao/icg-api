@@ -1,12 +1,12 @@
 package com.yb.icgapi.controller;
 
-import com.yb.icgapi.annotation.AuthCheck;
-import com.yb.icgapi.common.BaseResponse;
-import com.yb.icgapi.common.ResultUtils;
-import com.yb.icgapi.constant.UserConstant;
-import com.yb.icgapi.exception.BusinessException;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.manager.CosManager;
+import com.yb.icgapi.icpic.infrastructure.annotation.AuthCheck;
+import com.yb.icgapi.icpic.infrastructure.common.BaseResponse;
+import com.yb.icgapi.icpic.infrastructure.common.ResultUtils;
+import com.yb.icgapi.icpic.domain.user.constant.UserConstant;
+import com.yb.icgapi.icpic.infrastructure.exception.BusinessException;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.api.CosManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

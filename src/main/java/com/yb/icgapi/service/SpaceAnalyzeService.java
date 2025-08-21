@@ -3,7 +3,7 @@ package com.yb.icgapi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yb.icgapi.model.dto.analyze.*;
 import com.yb.icgapi.model.entity.Space;
-import com.yb.icgapi.model.entity.User;
+import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.model.vo.analyze.*;
 
 import java.util.List;

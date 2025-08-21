@@ -1,9 +1,9 @@
 package com.yb.icgapi.manager;
 
 import cn.hutool.core.io.FileUtil;
-import com.yb.icgapi.constant.PictureConstant;
-import com.yb.icgapi.exception.ErrorCode;
-import com.yb.icgapi.exception.ThrowUtils;
+import com.yb.icgapi.icpic.domain.picture.constant.PictureConstant;
+import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
+import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
 import com.yb.icgapi.manager.upload.PictureUploadTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
