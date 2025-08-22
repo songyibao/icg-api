@@ -16,7 +16,12 @@ import com.yb.icgapi.icpic.interfaces.dto.user.UserRegisterRequest;
 import com.yb.icgapi.icpic.interfaces.vo.user.LoginUserVO;
 import com.yb.icgapi.icpic.domain.user.entity.User;
 import com.yb.icgapi.icpic.interfaces.vo.user.UserVO;
+import com.yb.icgapi.model.dto.space.SpaceAddRequest;
+import com.yb.icgapi.model.enums.SpaceLevelEnum;
+import com.yb.icgapi.model.enums.SpaceTypeEnum;
+import com.yb.icgapi.service.SpaceService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +40,9 @@ import java.util.Set;
 public class UserApplicationServiceImpl implements UserApplicationService {
 
     @Resource
+    @Lazy
+    SpaceService spaceService;
+    @Resource
     private UserDomainService userDomainService;
 
     @Transactional
@@ -46,7 +54,15 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         String checkPassword = userRegisterRequest.getCheckPassword();
         // 校验
         User.validUserRegister(userAccount, userPassword, checkPassword);
-        return userDomainService.userRegister(userAccount, userPassword, checkPassword);
+        long userId = userDomainService.userRegister(userAccount, userPassword, checkPassword);
+        User newUser = userDomainService.getUserById(userId);
+        ThrowUtils.ThrowIf(newUser == null,ErrorCode.OPERATION_ERROR,"注册失败");
+        SpaceAddRequest spaceAddRequest = new SpaceAddRequest();
+        spaceAddRequest.setSpaceName("我的空间");
+        spaceAddRequest.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+        spaceAddRequest.setSpaceType(SpaceTypeEnum.PRIVATE.getValue());
+        spaceService.addSpace(spaceAddRequest,newUser);
+        return userId;
     }
 
     @Override
