@@ -94,6 +94,7 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.yb.icgapi.controller
+          - com.yb.icgapi.icpic.interfaces.controller
 
 # 对象存储配置（需要从腾讯云获取）
 cos:
