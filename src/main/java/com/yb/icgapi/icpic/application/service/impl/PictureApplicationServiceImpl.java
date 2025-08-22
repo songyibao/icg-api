@@ -286,7 +286,7 @@ public class PictureApplicationServiceImpl implements PictureApplicationService 
     }
 
     @Override
-    @MultiLevelCache(KeyPrefix = "listPictureVOByPage", expireTime = 300, randomRange = 300)
+//    @MultiLevelCache(KeyPrefix = "listPictureVOByPage", expireTime = 300, randomRange = 300)
     public Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest) {
         Page<Picture> picturePage =
                 this.listPictureByPage(pictureQueryRequest);
