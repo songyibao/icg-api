@@ -9,53 +9,33 @@ on:
 # 定义一系列任务
 jobs:
   build-and-deploy:
-    # 关键：指定任务运行的环境
-    environment: production
     runs-on: ubuntu-latest
-
-    # 任务步骤
     steps:
-      # 步骤1: 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 步骤2: 设置 Java 环境
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 步骤3: 使用 Maven 构建项目
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # 步骤4: 将构建的 JAR 重命名为 app.jar
       - name: Rename JAR file
         run: mv target/icg-api-0.0.1-SNAPSHOT.jar target/app.jar
 
-      # 步骤5: 将 app.jar 传输到服务器
-      # 使用 appleboy/scp-action 插件将重命名后的 JAR 直接上传到目标位置
-      - name: Transfer JAR to server
-        uses: appleboy/scp-action@master
+      # 步驟5: 使用 rsync 部署文件並執行重啟命令
+      - name: Deploy to Server using rsync
+        uses: easingthemes/ssh-deploy@main
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "target/app.jar"           # 源文件是重命名后的 app.jar
-          target: "/opt/icg/"               # 目标目录
-          overwrite: true                   # 覆盖已存在的文件
-
-      # 步骤6: 重启服务器上的 systemd 服务
-      # 使用 appleboy/ssh-action 插件直接执行重启命令
-      - name: Restart application service
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
-            sudo systemctl restart icg.service
-            echo "Service restarted successfully!"
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvc -i" # rsync 參數，-i 打印文件信息
+          SOURCE: "target/app.jar" # 源文件
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USERNAME }}
+          REMOTE_PORT: ${{ secrets.SERVER_PORT || 22 }}
+          TARGET: "/opt/icg/" # 目標目錄
+          # 部署後執行的腳本
+          SCRIPT_AFTER: "sudo systemctl restart icg.service"
