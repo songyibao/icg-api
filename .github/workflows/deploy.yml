@@ -1,0 +1,60 @@
+# 工作流名称
+name: Deploy ICG API to Server
+
+# 触发条件：当代码 push 到 main 分支时触发
+on:
+  push:
+    branches: [ "main" ]
+
+# 定义一系列任务
+jobs:
+  build-and-deploy:
+    # 运行环境
+    runs-on: ubuntu-latest
+
+    # 任务步骤
+    steps:
+      # 步骤1: 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 步骤2: 设置 Java 环境
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 步骤3: 使用 Maven 构建项目
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # 步骤4: 将构建的 JAR 重命名为 app.jar
+      - name: Rename JAR file
+        run: mv target/icg-api-0.0.1-SNAPSHOT.jar target/app.jar
+
+      # 步骤5: 将 app.jar 传输到服务器
+      # 使用 appleboy/scp-action 插件将重命名后的 JAR 直接上传到目标位置
+      - name: Transfer JAR to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: "target/app.jar"           # 源文件是重命名后的 app.jar
+          target: "/opt/icg/"               # 目标目录
+          overwrite: true                   # 覆盖已存在的文件
+
+      # 步骤6: 重启服务器上的 systemd 服务
+      # 使用 appleboy/ssh-action 插件直接执行重启命令
+      - name: Restart application service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            sudo systemctl restart icg.service
+            echo "Service restarted successfully!"
