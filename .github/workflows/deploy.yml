@@ -9,6 +9,8 @@ on:
 # 定义一系列任务
 jobs:
   build-and-deploy:
+    # 关键：指定任务运行的环境
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
