@@ -1,6 +1,5 @@
 package com.yb.icgapi.icpic.interfaces.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yb.icgapi.icpic.infrastructure.annotation.AuthCheck;
 import com.yb.icgapi.icpic.infrastructure.common.BaseResponse;
@@ -18,12 +17,10 @@ import com.yb.icgapi.icpic.application.service.UserApplicationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 @RestController
 @RequestMapping("/user")

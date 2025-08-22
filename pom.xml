@@ -175,7 +175,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.yb.icgapi.IcgApiApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>

@@ -1,17 +1,13 @@
 package com.yb.icgapi.icpic.interfaces.controller;
 
-import java.util.Arrays;
 import java.util.List;
 
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yb.icgapi.icpic.application.service.PictureApplicationService;
 import com.yb.icgapi.icpic.infrastructure.annotation.AuthCheck;
 import com.yb.icgapi.icpic.infrastructure.api.aliYunAi.model.CreateOutPaintingTaskResponse;
 import com.yb.icgapi.icpic.infrastructure.api.aliYunAi.model.GetOutPaintingTaskResponse;
-import com.yb.icgapi.icpic.infrastructure.api.imagesearch.ImageSearchApiFacade;
 import com.yb.icgapi.icpic.infrastructure.api.imagesearch.model.ImageSearchResult;
 import com.yb.icgapi.icpic.infrastructure.common.BaseResponse;
 import com.yb.icgapi.icpic.infrastructure.common.DeleteRequest;
@@ -22,20 +18,14 @@ import com.yb.icgapi.icpic.infrastructure.exception.ErrorCode;
 import com.yb.icgapi.icpic.infrastructure.exception.ThrowUtils;
 import com.yb.icgapi.icpic.interfaces.assembler.PictureAssembler;
 import com.yb.icgapi.manager.auth.SpaceUserAuthManager;
-import com.yb.icgapi.manager.auth.StpKit;
 import com.yb.icgapi.manager.auth.annotation.SaSpaceCheckPermission;
 import com.yb.icgapi.icpic.interfaces.dto.picture.*;
 import com.yb.icgapi.icpic.domain.picture.entity.Picture;
-import com.yb.icgapi.model.entity.Space;
 import com.yb.icgapi.icpic.domain.user.entity.User;
-import com.yb.icgapi.model.enums.PictureReviewStatusEnum;
 import com.yb.icgapi.model.vo.PictureTagCategory;
 import com.yb.icgapi.icpic.interfaces.vo.picture.PictureVO;
-import com.yb.icgapi.icpic.domain.picture.service.PictureDomainService;
 import com.yb.icgapi.service.SpaceService;
 import com.yb.icgapi.icpic.application.service.UserApplicationService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -144,13 +134,6 @@ public class PictureController {
         return ResultUtils.success(pictureApplicationService.listPictureVOByPage(pictureQueryRequest));
     }
 
-    @PostMapping("/list/page/vo/cache")
-    @Deprecated
-    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest) {
-        ThrowUtils.ThrowIf(pictureQueryRequest == null, ErrorCode.PARAMS_ERROR);
-        Page<PictureVO> pictureVOPage = pictureApplicationService.listPictureVOByPage(pictureQueryRequest);
-        return ResultUtils.success(pictureVOPage);
-    }
 
     @PostMapping("/edit")
     @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_EDIT)
